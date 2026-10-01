@@ -146,19 +146,26 @@ cdt_triangulate_attr <- function(x, y, s0 = NULL, s1 = NULL, PA = NULL, ...) {
   if (is.null(PA)) return(r)
   PA <- as.matrix(PA)
   stopifnot(nrow(PA) == length(x))
+  n_out <- nrow(r$P)
+  if (ncol(PA) == 0L) {
+    r$PA <- matrix(0, n_out, 0L)
+    return(r)
+  }
   ## first input row for each deduplicated vertex
   first <- match(seq_len(r$n_input), r$input_map)
   base_PA <- PA[first, , drop = FALSE]
-  n_out <- nrow(r$P)
   out <- matrix(NA_real_, n_out, ncol(PA), dimnames = list(NULL, colnames(PA)))
   out[seq_len(r$n_input), ] <- base_PA
   if (n_out > r$n_input) {
     base <- cdt_triangulate(x, y, s0, s1, erase = "hull", intersect = "resolve")
     idx <- seq(r$n_input + 1L, n_out)
     ## the base mesh may itself have crossing-resolution vertices beyond n_input
-    bPA <- rbind(base_PA, if (nrow(base$P) > r$n_input)
-      cdt_interpolate(base$P[seq_len(r$n_input), , drop = FALSE],
-                      base$T, base_PA, base$P[-seq_len(r$n_input), 1], base$P[-seq_len(r$n_input), 2]))
+    bPA <- base_PA
+    if (nrow(base$P) > r$n_input) {
+      extra <- seq(r$n_input + 1L, nrow(base$P))
+      bPA <- rbind(base_PA, cdt_interpolate(base$P[seq_len(r$n_input), , drop = FALSE],
+                                            base$T, base_PA, base$P[extra, 1], base$P[extra, 2]))
+    }
     out[idx, ] <- cdt_interpolate(base$P, base$T, bPA, r$P[idx, 1], r$P[idx, 2])
   }
   r$PA <- out

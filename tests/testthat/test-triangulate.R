@@ -99,6 +99,9 @@ test_that("attributes are carried onto Steiner vertices by linear interpolation"
   r2 <- cdt_triangulate_attr(x, y, s0, s1, PA = cbind(z = z, m = -z), max_area = 0.02)
   expect_equal(r2$PA[1:4, "m"], -z)
   expect_equal(r2$PA[, "m"], -r2$PA[, "z"])
+  ## zero-column PA (what RTriangle::pslg() builds by default) passes through
+  r00 <- cdt_triangulate_attr(x, y, s0, s1, PA = matrix(0, 4, 0), max_area = 0.02)
+  expect_equal(dim(r00$PA), c(nrow(r00$P), 0L))
   ## no refinement: PA is just the input
   r0 <- cdt_triangulate_attr(x, y, s0, s1, PA = cbind(z = z))
   expect_equal(r0$PA[, "z"], z)
