@@ -48,7 +48,7 @@ when \code{min_edge_length} is NULL}
 
 \item{erase}{one of "outer" (drop triangles outside the segment-bounded region,
 as RTriangle's \code{-p} does), "hull" (keep the convex hull), "holes" (also drop
-even-depth regions)}
+even-depth regions). With no segments there is no boundary, so "hull" is used.}
 
 \item{intersect}{how crossing constraints are handled: "resolve" inserts the
 crossing point, "error" fails, "ignore" skips the check}

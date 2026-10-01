@@ -12,9 +12,17 @@ extern "C" SEXP _cdtr_cdt_triangulate_cpp(SEXP x, SEXP y, SEXP s0, SEXP s1, SEXP
     return cpp11::as_sexp(cdt_triangulate_cpp(cpp11::as_cpp<cpp11::decay_t<doubles>>(x), cpp11::as_cpp<cpp11::decay_t<doubles>>(y), cpp11::as_cpp<cpp11::decay_t<integers>>(s0), cpp11::as_cpp<cpp11::decay_t<integers>>(s1), cpp11::as_cpp<cpp11::decay_t<double>>(max_area), cpp11::as_cpp<cpp11::decay_t<double>>(min_angle_deg), cpp11::as_cpp<cpp11::decay_t<int>>(max_steiner), cpp11::as_cpp<cpp11::decay_t<double>>(min_edge_length), cpp11::as_cpp<cpp11::decay_t<bool>>(conforming), cpp11::as_cpp<cpp11::decay_t<int>>(erase_mode), cpp11::as_cpp<cpp11::decay_t<int>>(intersect_mode), cpp11::as_cpp<cpp11::decay_t<bool>>(angle_first)));
   END_CPP11
 }
+// interpolate.cpp
+doubles_matrix<> cdt_interpolate_cpp(doubles_matrix<> P, integers_matrix<> T, doubles_matrix<> A, doubles xq, doubles yq);
+extern "C" SEXP _cdtr_cdt_interpolate_cpp(SEXP P, SEXP T, SEXP A, SEXP xq, SEXP yq) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cdt_interpolate_cpp(cpp11::as_cpp<cpp11::decay_t<doubles_matrix<>>>(P), cpp11::as_cpp<cpp11::decay_t<integers_matrix<>>>(T), cpp11::as_cpp<cpp11::decay_t<doubles_matrix<>>>(A), cpp11::as_cpp<cpp11::decay_t<doubles>>(xq), cpp11::as_cpp<cpp11::decay_t<doubles>>(yq)));
+  END_CPP11
+}
 
 extern "C" {
 static const R_CallMethodDef CallEntries[] = {
+    {"_cdtr_cdt_interpolate_cpp", (DL_FUNC) &_cdtr_cdt_interpolate_cpp,  5},
     {"_cdtr_cdt_triangulate_cpp", (DL_FUNC) &_cdtr_cdt_triangulate_cpp, 12},
     {NULL, NULL, 0}
 };

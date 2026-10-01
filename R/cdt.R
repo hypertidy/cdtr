@@ -20,7 +20,7 @@
 #' @param conforming if TRUE use conforming (Steiner on segments) instead of constrained
 #' @param erase one of "outer" (drop triangles outside the segment-bounded region,
 #'   as RTriangle's `-p` does), "hull" (keep the convex hull), "holes" (also drop
-#'   even-depth regions)
+#'   even-depth regions). With no segments there is no boundary, so "hull" is used.
 #' @param intersect how crossing constraints are handled: "resolve" inserts the
 #'   crossing point, "error" fails, "ignore" skips the check
 #' @param angle_first when both criteria are given, refine by angle before area
@@ -40,10 +40,13 @@ cdt_triangulate <- function(x, y, s0 = NULL, s1 = NULL,
                             erase = c("outer", "hull", "holes"),
                             intersect = c("resolve", "error", "ignore"),
                             angle_first = FALSE) {
-  erase <- match(match.arg(erase), c("hull", "outer", "holes")) - 1L
-  intersect <- match(match.arg(intersect), c("error", "resolve", "ignore")) - 1L
   if (is.null(s0)) s0 <- integer(0)
   if (is.null(s1)) s1 <- integer(0)
+  erase <- match.arg(erase)
+  ## with no constraints there is no boundary to erase outside of
+  if (length(s0) == 0L && erase != "hull") erase <- "hull"
+  erase <- match(erase, c("hull", "outer", "holes")) - 1L
+  intersect <- match(match.arg(intersect), c("error", "resolve", "ignore")) - 1L
   stopifnot(length(s0) == length(s1), length(x) == length(y))
   x <- as.double(x); y <- as.double(y)
   s0 <- as.integer(s0); s1 <- as.integer(s1)
@@ -102,4 +105,69 @@ unrefined_frame <- function(u) {
 #' @export
 cdt_pslg <- function(p, ...) {
   cdt_triangulate(p$P[, 1], p$P[, 2], p$S[, 1], p$S[, 2], ...)
+}
+
+#' Interpolate per-vertex attributes onto points
+#'
+#' Linear (barycentric) interpolation of a matrix of per-vertex values from a
+#' triangle mesh onto query points. Points in no triangle take the nearest
+#' vertex's value. Used to carry attributes such as z onto Steiner vertices
+#' after refinement, matching the `PA` behaviour of RTriangle.
+#'
+#' @param P vertex coordinates (n x 2)
+#' @param T triangle vertex indices (m x 3, 1-based)
+#' @param A per-vertex attribute matrix (n x k) or vector
+#' @param xq,yq query coordinates
+#' @return a length(xq) x k matrix (column names kept from `A`)
+#' @export
+cdt_interpolate <- function(P, T, A, xq, yq) {
+  A <- as.matrix(A); storage.mode(A) <- "double"
+  P <- as.matrix(P); storage.mode(P) <- "double"
+  T <- as.matrix(T); storage.mode(T) <- "integer"
+  stopifnot(nrow(A) == nrow(P), ncol(P) == 2L, ncol(T) == 3L, length(xq) == length(yq))
+  out <- cdt_interpolate_cpp(P, T, A, as.double(xq), as.double(yq))
+  colnames(out) <- colnames(A)
+  out
+}
+
+#' Triangulate with per-vertex attributes carried onto new vertices
+#'
+#' `cdt_triangulate()` plus a `PA` matrix of per-input-vertex attributes
+#' (z, m, t ...), returned as `$PA` aligned with the output vertices. Input
+#' vertices keep their values; Steiner vertices get values interpolated from
+#' the unrefined constrained triangulation of the input.
+#'
+#' @inheritParams cdt_triangulate
+#' @param PA numeric matrix with one row per input vertex (or NULL)
+#' @param ... passed to [cdt_triangulate()]
+#' @export
+cdt_triangulate_attr <- function(x, y, s0 = NULL, s1 = NULL, PA = NULL, ...) {
+  r <- cdt_triangulate(x, y, s0, s1, ...)
+  if (is.null(PA)) return(r)
+  PA <- as.matrix(PA)
+  stopifnot(nrow(PA) == length(x))
+  n_out <- nrow(r$P)
+  if (ncol(PA) == 0L) {
+    r$PA <- matrix(0, n_out, 0L)
+    return(r)
+  }
+  ## first input row for each deduplicated vertex
+  first <- match(seq_len(r$n_input), r$input_map)
+  base_PA <- PA[first, , drop = FALSE]
+  out <- matrix(NA_real_, n_out, ncol(PA), dimnames = list(NULL, colnames(PA)))
+  out[seq_len(r$n_input), ] <- base_PA
+  if (n_out > r$n_input) {
+    base <- cdt_triangulate(x, y, s0, s1, erase = "hull", intersect = "resolve")
+    idx <- seq(r$n_input + 1L, n_out)
+    ## the base mesh may itself have crossing-resolution vertices beyond n_input
+    bPA <- base_PA
+    if (nrow(base$P) > r$n_input) {
+      extra <- seq(r$n_input + 1L, nrow(base$P))
+      bPA <- rbind(base_PA, cdt_interpolate(base$P[seq_len(r$n_input), , drop = FALSE],
+                                            base$T, base_PA, base$P[extra, 1], base$P[extra, 2]))
+    }
+    out[idx, ] <- cdt_interpolate(base$P, base$T, bPA, r$P[idx, 1], r$P[idx, 2])
+  }
+  r$PA <- out
+  r
 }
