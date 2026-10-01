@@ -24,3 +24,7 @@ triangle mesh onto query points. Points in no triangle take the nearest
 vertex's value. Used to carry attributes such as z onto Steiner vertices
 after refinement, matching the \code{PA} behaviour of RTriangle.
 }
+\examples{
+P <- cbind(c(0, 1, 0), c(0, 0, 1)); T <- matrix(1:3, 1)
+cdt_interpolate(P, T, cbind(v = c(10, 20, 30)), c(0.25, 0.5), c(0.25, 0.25))
+}
