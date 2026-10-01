@@ -12,7 +12,9 @@ cdt_triangulate(
   max_area = NULL,
   min_angle = NULL,
   max_steiner = Inf,
-  min_edge_length = 1e-06,
+  min_edge_length = NULL,
+  min_edge_frac = 0.3,
+  area_edge_frac = 0.25,
   conforming = FALSE,
   erase = c("outer", "hull", "holes"),
   intersect = c("resolve", "error", "ignore"),
@@ -30,20 +32,37 @@ cdt_triangulate(
 
 \item{max_steiner}{budget of Steiner points to insert (Inf for unlimited)}
 
-\item{min_edge_length}{refinement gives up on edges shorter than this}
+\item{min_edge_length}{refinement does not split edges or triangles already
+shorter than this. NULL (the default) chooses a value from the input and
+the targets (see \code{\link[=default_min_edge_length]{default_min_edge_length()}}): a fraction of the median
+constraint segment length, capped so that it never blocks the \code{max_area}
+target. This stops the refiner cascading into sharp input corners. Use 0
+to never give up.}
+
+\item{min_edge_frac}{fraction of the median constraint segment length used
+when \code{min_edge_length} is NULL}
+
+\item{area_edge_frac}{fraction of \code{sqrt(max_area)} that caps the default floor}
 
 \item{conforming}{if TRUE use conforming (Steiner on segments) instead of constrained}
 
-\item{erase}{one of "hull" (keep convex hull, like RTriangle), "outer", "holes"}
+\item{erase}{one of "outer" (drop triangles outside the segment-bounded region,
+as RTriangle's \code{-p} does), "hull" (keep the convex hull), "holes" (also drop
+even-depth regions)}
 
 \item{intersect}{how crossing constraints are handled: "resolve" inserts the
 crossing point, "error" fails, "ignore" skips the check}
+
+\item{angle_first}{when both criteria are given, refine by angle before area
+(default is area then angle; the two orderings differ little)}
 }
 \value{
 list with P (vertices), T (1-based triangle indices), S (fixed edges),
 depth (per-triangle constraint layer depth: 0 outside, odd inside, even hole),
 n_input (vertices after dedupe, before Steiner), input_map (input vertex ->
-deduped vertex index), unrefined (counts of refinements CDT could not do)
+deduped vertex index), min_edge_length (the value used), and unrefined, a
+data frame with one row per refinement pass counting what CDT could not
+refine (short edges, sharp fixed corners, and so on)
 }
 \description{
 Thin binding to the artem-ogre/CDT library. Input mirrors RTriangle::pslg:

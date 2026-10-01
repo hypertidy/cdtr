@@ -8,37 +8,96 @@
 #' @param max_area maximum triangle area (Ruppert refinement by area), NULL for none
 #' @param min_angle minimum triangle angle in degrees, NULL for none
 #' @param max_steiner budget of Steiner points to insert (Inf for unlimited)
-#' @param min_edge_length refinement gives up on edges shorter than this
+#' @param min_edge_length refinement does not split edges or triangles already
+#'   shorter than this. NULL (the default) chooses a value from the input and
+#'   the targets (see [default_min_edge_length()]): a fraction of the median
+#'   constraint segment length, capped so that it never blocks the `max_area`
+#'   target. This stops the refiner cascading into sharp input corners. Use 0
+#'   to never give up.
+#' @param min_edge_frac fraction of the median constraint segment length used
+#'   when `min_edge_length` is NULL
+#' @param area_edge_frac fraction of `sqrt(max_area)` that caps the default floor
 #' @param conforming if TRUE use conforming (Steiner on segments) instead of constrained
-#' @param erase one of "hull" (keep convex hull, like RTriangle), "outer", "holes"
+#' @param erase one of "outer" (drop triangles outside the segment-bounded region,
+#'   as RTriangle's `-p` does), "hull" (keep the convex hull), "holes" (also drop
+#'   even-depth regions)
 #' @param intersect how crossing constraints are handled: "resolve" inserts the
 #'   crossing point, "error" fails, "ignore" skips the check
+#' @param angle_first when both criteria are given, refine by angle before area
+#'   (default is area then angle; the two orderings differ little)
 #' @return list with P (vertices), T (1-based triangle indices), S (fixed edges),
 #'   depth (per-triangle constraint layer depth: 0 outside, odd inside, even hole),
 #'   n_input (vertices after dedupe, before Steiner), input_map (input vertex ->
-#'   deduped vertex index), unrefined (counts of refinements CDT could not do)
+#'   deduped vertex index), min_edge_length (the value used), and unrefined, a
+#'   data frame with one row per refinement pass counting what CDT could not
+#'   refine (short edges, sharp fixed corners, and so on)
 #' @export
 cdt_triangulate <- function(x, y, s0 = NULL, s1 = NULL,
                             max_area = NULL, min_angle = NULL,
-                            max_steiner = Inf, min_edge_length = 1e-6,
+                            max_steiner = Inf,
+                            min_edge_length = NULL, min_edge_frac = 0.3, area_edge_frac = 0.25,
                             conforming = FALSE,
                             erase = c("outer", "hull", "holes"),
-                            intersect = c("resolve", "error", "ignore"), angle_first = FALSE) {
+                            intersect = c("resolve", "error", "ignore"),
+                            angle_first = FALSE) {
   erase <- match(match.arg(erase), c("hull", "outer", "holes")) - 1L
   intersect <- match(match.arg(intersect), c("error", "resolve", "ignore")) - 1L
   if (is.null(s0)) s0 <- integer(0)
   if (is.null(s1)) s1 <- integer(0)
   stopifnot(length(s0) == length(s1), length(x) == length(y))
-  cdt_triangulate_cpp(as.double(x), as.double(y),
-                      as.integer(s0) - 1L, as.integer(s1) - 1L,
-                      if (is.null(max_area)) -1 else max_area,
-                      if (is.null(min_angle)) -1 else min_angle,
-                      if (is.infinite(max_steiner)) -1L else as.integer(max_steiner),
-                      min_edge_length, conforming, erase, intersect, angle_first)
+  x <- as.double(x); y <- as.double(y)
+  s0 <- as.integer(s0); s1 <- as.integer(s1)
+  refining <- !is.null(max_area) || !is.null(min_angle)
+  if (is.null(min_edge_length)) {
+    min_edge_length <- if (refining) default_min_edge_length(x, y, s0, s1, max_area, min_edge_frac, area_edge_frac) else 0
+  }
+  out <- cdt_triangulate_cpp(x, y, s0 - 1L, s1 - 1L,
+                             if (is.null(max_area)) -1 else max_area,
+                             if (is.null(min_angle)) -1 else min_angle,
+                             if (is.infinite(max_steiner)) -1L else as.integer(max_steiner),
+                             min_edge_length, conforming, erase, intersect, angle_first)
+  out$min_edge_length <- min_edge_length
+  out$unrefined <- unrefined_frame(out$unrefined)
+  out
 }
 
-#' Convert an RTriangle pslg to cdt_triangulate arguments
-#' @param p a pslg
+#' Default refinement edge-length floor
+#'
+#' `min_edge_frac` times the median constraint segment length, which keeps
+#' the refiner from cascading into sharp input corners, capped at
+#' `area_edge_frac * sqrt(max_area)` so the floor never blocks the area
+#' target (a triangle of area A has edges of order sqrt(A)). With no
+#' segments only the area cap applies; with neither, 0.
+#' @inheritParams cdt_triangulate
+#' @export
+default_min_edge_length <- function(x, y, s0, s1, max_area = NULL,
+                                    min_edge_frac = 0.3, area_edge_frac = 0.25) {
+  seg <- Inf
+  if (length(s0) > 0L) {
+    len <- sqrt((x[s0] - x[s1])^2 + (y[s0] - y[s1])^2)
+    len <- len[len > 0]
+    if (length(len) > 0L) seg <- min_edge_frac * stats::median(len)
+  }
+  cap <- if (is.null(max_area)) Inf else area_edge_frac * sqrt(max_area)
+  out <- min(seg, cap)
+  if (is.infinite(out)) 0 else out
+}
+
+unrefined_frame <- function(u) {
+  cols <- c("shortEdgeTriangles", "circumcenterOutside", "circumcenterOnVertex",
+            "sharpFixedCorner", "shortEdges", "splitVertexInvalid")
+  if (length(u) == 0L) {
+    return(cbind(data.frame(criterion = character(0)),
+                 as.data.frame(setNames(replicate(length(cols), integer(0), simplify = FALSE), cols))))
+  }
+  rows <- lapply(names(u), function(nm) data.frame(criterion = nm, as.list(u[[nm]])))
+  out <- do.call(rbind, rows)
+  rownames(out) <- NULL
+  out
+}
+
+#' Triangulate an RTriangle pslg with the CDT backend
+#' @param p a pslg (list with P and S)
 #' @param ... passed to cdt_triangulate
 #' @export
 cdt_pslg <- function(p, ...) {

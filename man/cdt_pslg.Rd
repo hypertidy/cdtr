@@ -2,15 +2,15 @@
 % Please edit documentation in R/cdt.R
 \name{cdt_pslg}
 \alias{cdt_pslg}
-\title{Convert an RTriangle pslg to cdt_triangulate arguments}
+\title{Triangulate an RTriangle pslg with the CDT backend}
 \usage{
 cdt_pslg(p, ...)
 }
 \arguments{
-\item{p}{a pslg}
+\item{p}{a pslg (list with P and S)}
 
 \item{...}{passed to cdt_triangulate}
 }
 \description{
-Convert an RTriangle pslg to cdt_triangulate arguments
+Triangulate an RTriangle pslg with the CDT backend
 }
