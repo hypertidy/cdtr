@@ -1,0 +1,23 @@
+url: https://hypertidy.github.io/cdtr
+
+template:
+  bootstrap: 5
+
+reference:
+- title: Triangulation
+  desc: Build constrained/conforming Delaunay triangulations with optional refinement.
+  contents:
+  - cdt_triangulate
+  - cdt_triangulate_attr
+  - cdt_pslg
+
+- title: Mesh utilities
+  desc: Helpers for working with triangulation output.
+  contents:
+  - cdt_edges
+  - cdt_interpolate
+  - default_min_edge_length
+
+- title: Package
+  contents:
+  - cdtr-package
