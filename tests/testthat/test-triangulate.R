@@ -78,3 +78,33 @@ test_that("cdt_pslg accepts an RTriangle-style list", {
   p <- list(P = cbind(d$x, d$y), S = cbind(d$s0, d$s1))
   expect_equal(cdt_pslg(p)$T, cdt_triangulate(d$x, d$y, d$s0, d$s1)$T)
 })
+
+test_that("no constraints falls back to the hull", {
+  set.seed(1); x <- runif(30); y <- runif(30)
+  expect_gt(nrow(cdt_triangulate(x, y)$T), 0L)
+  expect_equal(cdt_triangulate(x, y)$T, cdt_triangulate(x, y, erase = "hull")$T)
+})
+
+test_that("attributes are carried onto Steiner vertices by linear interpolation", {
+  x <- c(0, 1, 1, 0); y <- c(0, 0, 1, 1)
+  s0 <- 1:4; s1 <- c(2, 3, 4, 1)
+  ## z is a linear field, so interpolation must reproduce it exactly
+  z <- 2 * x + 3 * y + 1
+  r <- cdt_triangulate_attr(x, y, s0, s1, PA = cbind(z = z), max_area = 0.02)
+  expect_gt(nrow(r$P), 4L)
+  expect_equal(dim(r$PA), c(nrow(r$P), 1L))
+  expect_equal(colnames(r$PA), "z")
+  expect_equal(r$PA[, "z"], 2 * r$P[, 1] + 3 * r$P[, 2] + 1)
+  ## input rows unchanged, two columns fine
+  r2 <- cdt_triangulate_attr(x, y, s0, s1, PA = cbind(z = z, m = -z), max_area = 0.02)
+  expect_equal(r2$PA[1:4, "m"], -z)
+  expect_equal(r2$PA[, "m"], -r2$PA[, "z"])
+  ## no refinement: PA is just the input
+  r0 <- cdt_triangulate_attr(x, y, s0, s1, PA = cbind(z = z))
+  expect_equal(r0$PA[, "z"], z)
+})
+
+test_that("cdt_interpolate falls back to nearest vertex outside the mesh", {
+  P <- cbind(c(0, 1, 0), c(0, 0, 1)); T <- matrix(1:3, 1)
+  expect_equal(cdt_interpolate(P, T, c(10, 20, 30), c(0.25, 5), c(0.25, 5))[, 1], c(17.5, 20))
+})
