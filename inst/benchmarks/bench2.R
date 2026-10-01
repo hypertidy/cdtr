@@ -1,4 +1,4 @@
-source_lines <- readLines("inst/bench.R"); eval(parse(text = source_lines[1:grep("^for \\(nm in names\\(cases\\)\\) cat", source_lines)]))
+source(system.file("benchmarks", "helpers.R", package = "cdtr"))
 for (nm in c("nc", "cont_tas")) {
   p <- cases[[nm]]; A <- prod(diff(apply(p$P, 2, range)))
   for (ma in c(A/5000, A/50000)) {
