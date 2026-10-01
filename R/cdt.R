@@ -23,7 +23,7 @@ cdt_triangulate <- function(x, y, s0 = NULL, s1 = NULL,
                             max_steiner = Inf, min_edge_length = 1e-6,
                             conforming = FALSE,
                             erase = c("outer", "hull", "holes"),
-                            intersect = c("resolve", "error", "ignore")) {
+                            intersect = c("resolve", "error", "ignore"), angle_first = FALSE) {
   erase <- match(match.arg(erase), c("hull", "outer", "holes")) - 1L
   intersect <- match(match.arg(intersect), c("error", "resolve", "ignore")) - 1L
   if (is.null(s0)) s0 <- integer(0)
@@ -34,7 +34,7 @@ cdt_triangulate <- function(x, y, s0 = NULL, s1 = NULL,
                       if (is.null(max_area)) -1 else max_area,
                       if (is.null(min_angle)) -1 else min_angle,
                       if (is.infinite(max_steiner)) -1L else as.integer(max_steiner),
-                      min_edge_length, conforming, erase, intersect)
+                      min_edge_length, conforming, erase, intersect, angle_first)
 }
 
 #' Convert an RTriangle pslg to cdt_triangulate arguments

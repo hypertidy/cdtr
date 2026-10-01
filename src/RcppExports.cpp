@@ -11,8 +11,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // cdt_triangulate_cpp
-List cdt_triangulate_cpp(NumericVector x, NumericVector y, IntegerVector s0, IntegerVector s1, double max_area, double min_angle_deg, int max_steiner, double min_edge_length, bool conforming, int erase_mode, int intersect_mode);
-RcppExport SEXP _cdtr_cdt_triangulate_cpp(SEXP xSEXP, SEXP ySEXP, SEXP s0SEXP, SEXP s1SEXP, SEXP max_areaSEXP, SEXP min_angle_degSEXP, SEXP max_steinerSEXP, SEXP min_edge_lengthSEXP, SEXP conformingSEXP, SEXP erase_modeSEXP, SEXP intersect_modeSEXP) {
+List cdt_triangulate_cpp(NumericVector x, NumericVector y, IntegerVector s0, IntegerVector s1, double max_area, double min_angle_deg, int max_steiner, double min_edge_length, bool conforming, int erase_mode, int intersect_mode, bool angle_first);
+RcppExport SEXP _cdtr_cdt_triangulate_cpp(SEXP xSEXP, SEXP ySEXP, SEXP s0SEXP, SEXP s1SEXP, SEXP max_areaSEXP, SEXP min_angle_degSEXP, SEXP max_steinerSEXP, SEXP min_edge_lengthSEXP, SEXP conformingSEXP, SEXP erase_modeSEXP, SEXP intersect_modeSEXP, SEXP angle_firstSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -27,13 +27,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< bool >::type conforming(conformingSEXP);
     Rcpp::traits::input_parameter< int >::type erase_mode(erase_modeSEXP);
     Rcpp::traits::input_parameter< int >::type intersect_mode(intersect_modeSEXP);
-    rcpp_result_gen = Rcpp::wrap(cdt_triangulate_cpp(x, y, s0, s1, max_area, min_angle_deg, max_steiner, min_edge_length, conforming, erase_mode, intersect_mode));
+    Rcpp::traits::input_parameter< bool >::type angle_first(angle_firstSEXP);
+    rcpp_result_gen = Rcpp::wrap(cdt_triangulate_cpp(x, y, s0, s1, max_area, min_angle_deg, max_steiner, min_edge_length, conforming, erase_mode, intersect_mode, angle_first));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_cdtr_cdt_triangulate_cpp", (DL_FUNC) &_cdtr_cdt_triangulate_cpp, 11},
+    {"_cdtr_cdt_triangulate_cpp", (DL_FUNC) &_cdtr_cdt_triangulate_cpp, 12},
     {NULL, NULL, 0}
 };
 

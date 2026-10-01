@@ -10,7 +10,7 @@ List cdt_triangulate_cpp(NumericVector x, NumericVector y,
                          IntegerVector s0, IntegerVector s1,
                          double max_area, double min_angle_deg,
                          int max_steiner, double min_edge_length,
-                         bool conforming, int erase_mode, int intersect_mode) {
+                         bool conforming, int erase_mode, int intersect_mode, bool angle_first) {
   // erase_mode: 0 = convex hull (RTriangle-like), 1 = outer, 2 = outer+holes
   // intersect_mode: 0 = NotAllowed, 1 = TryResolve, 2 = DontCheck
   const int n = x.size();
@@ -56,6 +56,9 @@ List cdt_triangulate_cpp(NumericVector x, NumericVector y,
   if (max_area > 0 || min_angle_deg > 0) {
     CDT::VertInd budget = max_steiner < 0 ? std::numeric_limits<CDT::VertInd>::max()
                                           : static_cast<CDT::VertInd>(max_steiner);
+    for (int pass = 0; pass < 2; ++pass) {
+    bool do_area = angle_first ? pass == 1 : pass == 0;
+    if (do_area) {
     if (max_area > 0) {
       CDT::Unrefined u = cdt.refineTriangles(budget, CDT::RefinementCriterion::LargestArea,
                                              max_area, &to_erase, min_edge_length);
@@ -67,6 +70,7 @@ List cdt_triangulate_cpp(NumericVector x, NumericVector y,
         _["shortEdges"] = (int)u.shortEdges,
         _["splitVertexInvalid"] = (int)u.splitVertexInvalid);
     }
+    } else {
     if (min_angle_deg > 0) {
       CDT::Unrefined u = cdt.refineTriangles(budget, CDT::RefinementCriterion::SmallestAngle,
                                              CDT::degToRad(min_angle_deg), &to_erase, min_edge_length);
@@ -77,6 +81,8 @@ List cdt_triangulate_cpp(NumericVector x, NumericVector y,
         _["sharpFixedCorner"] = (int)u.sharpFixedCorner,
         _["shortEdges"] = (int)u.shortEdges,
         _["splitVertexInvalid"] = (int)u.splitVertexInvalid);
+    }
+    }
     }
     // Steiner points change the triangle list; recompute depths.
     depths = cdt.calculateTriangleDepths();
