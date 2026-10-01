@@ -21,3 +21,9 @@ cdt_triangulate_attr(x, y, s0 = NULL, s1 = NULL, PA = NULL, ...)
 vertices keep their values; Steiner vertices get values interpolated from
 the unrefined constrained triangulation of the input.
 }
+\examples{
+x <- c(0, 1, 1, 0); y <- c(0, 0, 1, 1)
+z <- 2 * x + 3 * y                 ## a linear field, reproduced exactly
+r <- cdt_triangulate_attr(x, y, 1:4, c(2, 3, 4, 1), PA = cbind(z = z), max_area = 0.02)
+range(r$PA[, "z"] - (2 * r$P[, 1] + 3 * r$P[, 2]))
+}
