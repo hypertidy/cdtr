@@ -1,0 +1,4 @@
+useDynLib(cdtr, .registration=TRUE)
+importFrom(Rcpp, evalCpp)
+export(cdt_triangulate)
+export(cdt_pslg)

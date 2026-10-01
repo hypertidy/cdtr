@@ -1,0 +1,15 @@
+Package: cdtr
+Title: Constrained Delaunay Triangulation with Refinement via CDT
+Version: 0.0.0.9000
+Authors@R: person("Michael", "Sumner", email = "mdsumner@gmail.com", role = c("aut", "cre"))
+Description: Spike binding to the artem-ogre/CDT header-only C++ library (MPL-2.0):
+    constrained and conforming Delaunay triangulation, Ruppert refinement by
+    area or minimum angle, resolution of crossing constraints, and topological
+    region depth per triangle. Aimed at replacing RTriangle in anglr.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Imports: Rcpp
+LinkingTo: Rcpp
+SystemRequirements: C++11
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
