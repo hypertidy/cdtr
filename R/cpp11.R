@@ -3,3 +3,7 @@
 cdt_triangulate_cpp <- function(x, y, s0, s1, max_area, min_angle_deg, max_steiner, min_edge_length, conforming, erase_mode, intersect_mode, angle_first) {
   .Call(`_cdtr_cdt_triangulate_cpp`, x, y, s0, s1, max_area, min_angle_deg, max_steiner, min_edge_length, conforming, erase_mode, intersect_mode, angle_first)
 }
+
+cdt_interpolate_cpp <- function(P, T, A, xq, yq) {
+  .Call(`_cdtr_cdt_interpolate_cpp`, P, T, A, xq, yq)
+}

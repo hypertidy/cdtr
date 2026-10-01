@@ -43,6 +43,9 @@ segments_preserved <- function(P_in, S_in, P_out, S_out) {
 
 nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
 
+if (!requireNamespace("anglr", quietly = TRUE)) {
+  stop("the benchmarks need anglr (archived on CRAN): remotes::install_github(\"hypertidy/anglr\")")
+}
 cont_tas <- anglr::cont_tas; cad_tas <- anglr::cad_tas
 cases <- list(nc = as_pslg_sf(nc),
               cont_tas = as_pslg_sf(sf::st_as_sf(cont_tas)),

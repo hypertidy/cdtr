@@ -11,7 +11,6 @@ Encoding: UTF-8
 LinkingTo: cpp11
 SystemRequirements: C++11
 Suggests:
-    anglr,
     bench,
     RTriangle,
     sf,
