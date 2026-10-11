@@ -42,3 +42,27 @@ default_min_edge_length(
 - area_edge_frac:
 
   fraction of `sqrt(max_area)` that caps the default floor
+
+## Value
+
+a single non-negative number, the edge-length floor that
+[`cdt_triangulate()`](https://hypertidy.github.io/cdtr/reference/cdt_triangulate.md)
+uses when `min_edge_length = NULL`
+
+## Examples
+
+``` r
+x <- c(0, 1, 1, 0)
+y <- c(0, 0, 1, 1)
+s0 <- 1:4
+s1 <- c(2:4, 1)
+## 0.3 times the median segment length
+default_min_edge_length(x, y, s0, s1)
+#> [1] 0.3
+## a small area target caps the floor at 0.25 * sqrt(max_area)
+default_min_edge_length(x, y, s0, s1, max_area = 0.01)
+#> [1] 0.025
+## no segments and no area target: no floor
+default_min_edge_length(x, y, integer(0), integer(0))
+#> [1] 0
+```

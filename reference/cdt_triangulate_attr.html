@@ -71,7 +71,33 @@ the unrefined constrained triangulation of the input.</p>
 <dd><p>passed to <code><a href="cdt_triangulate.html">cdt_triangulate()</a></code></p></dd>
 
 </dl></div>
+    <div class="section level2">
+    <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
+    <p>the list returned by <code><a href="cdt_triangulate.html">cdt_triangulate()</a></code>, plus <code>PA</code>, a matrix with
+one row per output vertex and the columns of the input <code>PA</code> (absent when
+<code>PA = NULL</code>)</p>
+    </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">0</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co">## a sloping surface: z rises with x</span></span></span>
+<span class="r-in"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu">cdt_triangulate_attr</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span><span class="op">:</span><span class="fl">4</span>, <span class="fl">1</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                          PA <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span>z <span class="op">=</span> <span class="fl">10</span> <span class="op">*</span> <span class="va">x</span><span class="op">)</span>, max_area <span class="op">=</span> <span class="fl">0.02</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co">## Steiner vertices carry interpolated z</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">r</span><span class="op">$</span><span class="va">P</span>, <span class="va">r</span><span class="op">$</span><span class="va">PA</span><span class="op">)</span><span class="op">[</span><span class="va">r</span><span class="op">$</span><span class="va">origin</span> <span class="op">==</span> <span class="st">"steiner"</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   z</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1,] 0.50 0.50  5.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [2,] 0.50 0.00  5.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [3,] 0.00 0.50  0.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [4,] 0.25 0.25  2.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [5,] 0.50 1.00  5.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [6,] 1.00 0.50 10.0</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">r</span><span class="op">$</span><span class="va">PA</span><span class="op">[</span>, <span class="st">"z"</span><span class="op">]</span>, <span class="fl">10</span> <span class="op">*</span> <span class="va">r</span><span class="op">$</span><span class="va">P</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
