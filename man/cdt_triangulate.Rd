@@ -79,3 +79,26 @@ the list also has depth_distinct (a doubled boundary counted once).
 Thin binding to the artem-ogre/CDT library. Input mirrors RTriangle::pslg:
 vertices as x/y and constraint segments as index pairs into the vertices.
 }
+\examples{
+## unit square with a square hole: two closed rings of 4 vertices
+x <- c(0, 1, 1, 0, 0.25, 0.75, 0.75, 0.25)
+y <- c(0, 0, 1, 1, 0.25, 0.25, 0.75, 0.75)
+s0 <- c(1, 2, 3, 4, 5, 6, 7, 8)
+s1 <- c(2, 3, 4, 1, 6, 7, 8, 5)
+
+## constrained triangulation, hole triangles kept with even depth
+r <- cdt_triangulate(x, y, s0, s1)
+table(r$depth)
+
+## drop the hole and refine by area and minimum angle
+r2 <- cdt_triangulate(x, y, s0, s1, erase = "holes",
+                      max_area = 0.005, min_angle = 25)
+table(r2$origin)
+plot(r2$P, asp = 1, pch = ".")
+polygon(r2$P[t(cbind(r2$T, NA)), ], col = "grey90")
+
+## points only: Delaunay triangulation of the convex hull
+set.seed(1)
+r3 <- cdt_triangulate(runif(30), runif(30))
+nrow(r3$T)
+}
