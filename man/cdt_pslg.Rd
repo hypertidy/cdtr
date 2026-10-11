@@ -9,8 +9,21 @@ cdt_pslg(p, ...)
 \arguments{
 \item{p}{a pslg (list with P and S)}
 
-\item{...}{passed to cdt_triangulate}
+\item{...}{passed to \code{\link[=cdt_triangulate]{cdt_triangulate()}}}
+}
+\value{
+the list returned by \code{\link[=cdt_triangulate]{cdt_triangulate()}}
 }
 \description{
-Triangulate an RTriangle pslg with the CDT backend
+Convenience for input in the shape of \code{RTriangle::pslg()}: a list with \code{P},
+a two-column matrix of vertex coordinates, and \code{S}, a two-column matrix of
+1-based segment vertex indices.
+}
+\examples{
+p <- list(P = cbind(c(0, 2, 2, 1, 0), c(0, 0, 2, 1, 2)),
+          S = cbind(1:5, c(2:5, 1)))
+r <- cdt_pslg(p, max_area = 0.05)
+nrow(r$T)
+plot(r$P, asp = 1, pch = ".")
+polygon(r$P[t(cbind(r$T, NA)), ])
 }

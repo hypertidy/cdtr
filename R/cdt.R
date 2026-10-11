@@ -41,6 +41,28 @@
 #'   (short edges, sharp fixed corners, and so on). When `depth_distinct = TRUE`
 #'   the list also has depth_distinct (a doubled boundary counted once).
 #' @export
+#' @examples
+#' ## unit square with a square hole: two closed rings of 4 vertices
+#' x <- c(0, 1, 1, 0, 0.25, 0.75, 0.75, 0.25)
+#' y <- c(0, 0, 1, 1, 0.25, 0.25, 0.75, 0.75)
+#' s0 <- c(1, 2, 3, 4, 5, 6, 7, 8)
+#' s1 <- c(2, 3, 4, 1, 6, 7, 8, 5)
+#'
+#' ## constrained triangulation, hole triangles kept with even depth
+#' r <- cdt_triangulate(x, y, s0, s1)
+#' table(r$depth)
+#'
+#' ## drop the hole and refine by area and minimum angle
+#' r2 <- cdt_triangulate(x, y, s0, s1, erase = "holes",
+#'                       max_area = 0.005, min_angle = 25)
+#' table(r2$origin)
+#' plot(r2$P, asp = 1, pch = ".")
+#' polygon(r2$P[t(cbind(r2$T, NA)), ], col = "grey90")
+#'
+#' ## points only: Delaunay triangulation of the convex hull
+#' set.seed(1)
+#' r3 <- cdt_triangulate(runif(30), runif(30))
+#' nrow(r3$T)
 cdt_triangulate <- function(x, y, s0 = NULL, s1 = NULL,
                             max_area = NULL, min_angle = NULL,
                             max_steiner = Inf,
@@ -94,7 +116,20 @@ vertex_origin <- function(nv, n_input, n_crossing, conforming) {
 #' target (a triangle of area A has edges of order sqrt(A)). With no
 #' segments only the area cap applies; with neither, 0.
 #' @inheritParams cdt_triangulate
+#' @return a single non-negative number, the edge-length floor that
+#'   [cdt_triangulate()] uses when `min_edge_length = NULL`
 #' @export
+#' @examples
+#' x <- c(0, 1, 1, 0)
+#' y <- c(0, 0, 1, 1)
+#' s0 <- 1:4
+#' s1 <- c(2:4, 1)
+#' ## 0.3 times the median segment length
+#' default_min_edge_length(x, y, s0, s1)
+#' ## a small area target caps the floor at 0.25 * sqrt(max_area)
+#' default_min_edge_length(x, y, s0, s1, max_area = 0.01)
+#' ## no segments and no area target: no floor
+#' default_min_edge_length(x, y, integer(0), integer(0))
 default_min_edge_length <- function(x, y, s0, s1, max_area = NULL,
                                     min_edge_frac = 0.3, area_edge_frac = 0.25) {
   seg <- Inf
@@ -122,9 +157,22 @@ unrefined_frame <- function(u) {
 }
 
 #' Triangulate an RTriangle pslg with the CDT backend
+#'
+#' Convenience for input in the shape of `RTriangle::pslg()`: a list with `P`,
+#' a two-column matrix of vertex coordinates, and `S`, a two-column matrix of
+#' 1-based segment vertex indices.
+#'
 #' @param p a pslg (list with P and S)
-#' @param ... passed to cdt_triangulate
+#' @param ... passed to [cdt_triangulate()]
+#' @return the list returned by [cdt_triangulate()]
 #' @export
+#' @examples
+#' p <- list(P = cbind(c(0, 2, 2, 1, 0), c(0, 0, 2, 1, 2)),
+#'           S = cbind(1:5, c(2:5, 1)))
+#' r <- cdt_pslg(p, max_area = 0.05)
+#' nrow(r$T)
+#' plot(r$P, asp = 1, pch = ".")
+#' polygon(r$P[t(cbind(r$T, NA)), ])
 cdt_pslg <- function(p, ...) {
   cdt_triangulate(p$P[, 1], p$P[, 2], p$S[, 1], p$S[, 2], ...)
 }
@@ -162,6 +210,13 @@ cdt_edges <- function(x) {
 #' @param xq,yq query coordinates
 #' @return a length(xq) x k matrix (column names kept from `A`)
 #' @export
+#' @examples
+#' ## two triangles on the unit square, z = x + y at the corners
+#' P <- cbind(c(0, 1, 1, 0), c(0, 0, 1, 1))
+#' T <- rbind(c(1, 2, 3), c(1, 3, 4))
+#' A <- cbind(z = P[, 1] + P[, 2])
+#' ## a linear field is reproduced exactly inside; (2, 2) is outside
+#' cdt_interpolate(P, T, A, xq = c(0.5, 0.25, 2), yq = c(0.5, 0.1, 2))
 cdt_interpolate <- function(P, T, A, xq, yq) {
   A <- as.matrix(A); storage.mode(A) <- "double"
   P <- as.matrix(P); storage.mode(P) <- "double"
@@ -182,7 +237,19 @@ cdt_interpolate <- function(P, T, A, xq, yq) {
 #' @inheritParams cdt_triangulate
 #' @param PA numeric matrix with one row per input vertex (or NULL)
 #' @param ... passed to [cdt_triangulate()]
+#' @return the list returned by [cdt_triangulate()], plus `PA`, a matrix with
+#'   one row per output vertex and the columns of the input `PA` (absent when
+#'   `PA = NULL`)
 #' @export
+#' @examples
+#' x <- c(0, 1, 1, 0)
+#' y <- c(0, 0, 1, 1)
+#' ## a sloping surface: z rises with x
+#' r <- cdt_triangulate_attr(x, y, 1:4, c(2:4, 1),
+#'                           PA = cbind(z = 10 * x), max_area = 0.02)
+#' ## Steiner vertices carry interpolated z
+#' head(cbind(r$P, r$PA)[r$origin == "steiner", , drop = FALSE])
+#' all.equal(r$PA[, "z"], 10 * r$P[, 1])
 cdt_triangulate_attr <- function(x, y, s0 = NULL, s1 = NULL, PA = NULL, ...) {
   r <- cdt_triangulate(x, y, s0, s1, ...)
   if (is.null(PA)) return(r)

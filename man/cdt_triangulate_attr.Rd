@@ -15,9 +15,24 @@ cdt_triangulate_attr(x, y, s0 = NULL, s1 = NULL, PA = NULL, ...)
 
 \item{...}{passed to \code{\link[=cdt_triangulate]{cdt_triangulate()}}}
 }
+\value{
+the list returned by \code{\link[=cdt_triangulate]{cdt_triangulate()}}, plus \code{PA}, a matrix with
+one row per output vertex and the columns of the input \code{PA} (absent when
+\code{PA = NULL})
+}
 \description{
 \code{cdt_triangulate()} plus a \code{PA} matrix of per-input-vertex attributes
 (z, m, t ...), returned as \verb{$PA} aligned with the output vertices. Input
 vertices keep their values; Steiner vertices get values interpolated from
 the unrefined constrained triangulation of the input.
+}
+\examples{
+x <- c(0, 1, 1, 0)
+y <- c(0, 0, 1, 1)
+## a sloping surface: z rises with x
+r <- cdt_triangulate_attr(x, y, 1:4, c(2:4, 1),
+                          PA = cbind(z = 10 * x), max_area = 0.02)
+## Steiner vertices carry interpolated z
+head(cbind(r$P, r$PA)[r$origin == "steiner", , drop = FALSE])
+all.equal(r$PA[, "z"], 10 * r$P[, 1])
 }
