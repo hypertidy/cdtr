@@ -32,13 +32,3 @@ cdt_interpolate(P, T, A, xq, yq)
 ## Value
 
 a length(xq) x k matrix (column names kept from `A`)
-
-## Examples
-
-``` r
-P <- cbind(c(0, 1, 0), c(0, 0, 1)); T <- matrix(1:3, 1)
-cdt_interpolate(P, T, cbind(v = c(10, 20, 30)), c(0.25, 0.5), c(0.25, 0.25))
-#>         v
-#> [1,] 17.5
-#> [2,] 20.0
-```

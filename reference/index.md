@@ -27,4 +27,4 @@ Helpers for working with triangulation output.
 
 - [`cdtr`](https://hypertidy.github.io/cdtr/reference/cdtr-package.md)
   [`cdtr-package`](https://hypertidy.github.io/cdtr/reference/cdtr-package.md)
-  : cdtr: Constrained Delaunay Triangulation with Refinement via CDT
+  : cdtr: Constrained Delaunay Triangulation with Refinement
