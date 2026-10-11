@@ -13,3 +13,4 @@
 ^\.Rhistory$
 ^inst/benchmarks$
 ^\.posit$
+^\.posit/assistant$

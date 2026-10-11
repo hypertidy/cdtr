@@ -4,10 +4,6 @@
 
 * This is a new release.
 
-* Possibly misspelled words in DESCRIPTION: 'Delaunay' and 'Ruppert' are
-  proper names (Boris Delaunay, Jim Ruppert) used in the standard names of the
-  algorithms ('Delaunay triangulation', 'Ruppert refinement'); they are spelled
-  correctly.
 
 ## Bundled code
 

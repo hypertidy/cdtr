@@ -4,6 +4,7 @@
 # cdtr
 
 <!-- badges: start -->
+
 [![R-CMD-check](https://github.com/hypertidy/cdtr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/hypertidy/cdtr/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
@@ -58,7 +59,7 @@ plot_mesh(cdt_triangulate(x, y, s0, s1, max_area = 0.01, min_angle = 25, erase =
           "+ min_angle = 25, holes erased")
 ```
 
-<img src="man/figures/README-toy-plot-1.png" width="100%" />
+<img src="man/figures/README-toy-plot-1.png" alt="" width="100%" />
 
 ``` r
 par(op)
@@ -111,7 +112,7 @@ op <- par(mar = rep(0, 4))
 plot_mesh(m)
 ```
 
-<img src="man/figures/README-nc-1.png" width="100%" />
+<img src="man/figures/README-nc-1.png" alt="" width="100%" />
 
 ``` r
 par(op)
