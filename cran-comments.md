@@ -4,10 +4,10 @@
 
 * This is a new release.
 
-* NOTE: "File which contains pragma(s) suppressing diagnostics:
-  'src/CDT/Triangulation.h'". This file is part of the bundled, unmodified
-  'CDT' C++ library; the pragma is upstream and only silences a compiler
-  warning in third-party code.
+* Possibly misspelled words in DESCRIPTION: 'Delaunay' and 'Ruppert' are
+  proper names (Boris Delaunay, Jim Ruppert) used in the standard names of the
+  algorithms ('Delaunay triangulation', 'Ruppert refinement'); they are spelled
+  correctly.
 
 ## Bundled code
 
@@ -16,3 +16,7 @@ The package includes the header-only 'CDT' C++ library
 License 2.0 (see inst/LICENSE.CDT), and the robust geometric predicates of
 William C. Lenthe (predicates.h), under a 3-clause BSD license. Copyright
 holders are acknowledged in Authors@R and inst/COPYRIGHTS.
+
+The bundled 'src/CDT/Triangulation.h' has been patched to remove a pragma
+that suppressed '-Wunused-parameter' diagnostics (the unused parameter names
+are now commented out instead); the change is documented in inst/COPYRIGHTS.

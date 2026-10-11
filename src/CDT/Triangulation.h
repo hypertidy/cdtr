@@ -400,11 +400,9 @@ struct CDT_EXPORT TriangleChangeType
     };
 };
 
-// parameter names are used for documentation purposes, even if they are un-used
-// in the interface's default implementation
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-
+// cdtr local patch: parameter names are kept as comments (rather than
+// silencing -Wunused-parameter with a pragma) so the header passes the R CMD
+// check for pragmas suppressing diagnostics
 /**
  * Interface for the callback handler that user can derive from and inject into
  * the triangulation to monitor certain events or order aborting the calculation
@@ -434,9 +432,9 @@ public:
      * @param iNewTri2 index of second added new triangle
      */
     virtual void onInsertVertexInsideTriangle(
-        const TriInd iRepurposedTri,
-        const TriInd iNewTri1,
-        const TriInd iNewTri2)
+        const TriInd /*iRepurposedTri*/,
+        const TriInd /*iNewTri1*/,
+        const TriInd /*iNewTri2*/)
     {}
 
     /**
@@ -451,10 +449,10 @@ public:
      * @param iNewTri2 index of second added new triangle
      */
     virtual void onInsertVertexOnEdge(
-        const TriInd iRepurposedTri1,
-        const TriInd iRepurposedTri2,
-        const TriInd iNewTri1,
-        const TriInd iNewTri2)
+        const TriInd /*iRepurposedTri1*/,
+        const TriInd /*iRepurposedTri2*/,
+        const TriInd /*iNewTri1*/,
+        const TriInd /*iNewTri2*/)
     {}
 
     /**
@@ -462,7 +460,7 @@ public:
      * @param iT index of the first triangle sharing an edge
      * @param iTopo index of the second triangle sharing an edge
      */
-    virtual void onFlipEdge(const TriInd iT, const TriInd iTopo)
+    virtual void onFlipEdge(const TriInd /*iT*/, const TriInd /*iTopo*/)
     {}
 
     /**
@@ -471,14 +469,14 @@ public:
      * @param vertexType what type of vertex is being added
      */
     virtual void
-    onAddVertexStart(const VertInd iV, const AddVertexType::Enum vertexType)
+    onAddVertexStart(const VertInd /*iV*/, const AddVertexType::Enum /*vertexType*/)
     {}
 
     /**
      * Called at the start of adding a constraint edge to the triangulation
      * @param edge constraint that is added/enforced
      */
-    virtual void onAddEdgeStart(const Edge& edge)
+    virtual void onAddEdgeStart(const Edge& /*edge*/)
     {}
 
     /**
@@ -487,7 +485,7 @@ public:
      * @tris triangles in the polygon that will be re-triangulated and triangles
      * re-purposed
      */
-    virtual void onReTriangulatePolygon(const std::vector<TriInd>& tris)
+    virtual void onReTriangulatePolygon(const std::vector<TriInd>& /*tris*/)
     {}
 
     /**
@@ -499,10 +497,6 @@ public:
         return false;
     };
 };
-
-// parameter names are used for documentation purposes, even if they are
-// un-used in the interface's default implementation
-#pragma GCC diagnostic pop
 
 #endif
 
