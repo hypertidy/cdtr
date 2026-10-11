@@ -83,7 +83,7 @@
 <span><span class="fu">plot_mesh</span><span class="op">(</span><span class="fu"><a href="reference/cdt_triangulate.html">cdt_triangulate</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">s0</span>, <span class="va">s1</span>, max_area <span class="op">=</span> <span class="fl">0.01</span><span class="op">)</span>, <span class="st">"max_area = 0.01"</span><span class="op">)</span></span>
 <span><span class="fu">plot_mesh</span><span class="op">(</span><span class="fu"><a href="reference/cdt_triangulate.html">cdt_triangulate</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">s0</span>, <span class="va">s1</span>, max_area <span class="op">=</span> <span class="fl">0.01</span>, min_angle <span class="op">=</span> <span class="fl">25</span>, erase <span class="op">=</span> <span class="st">"holes"</span><span class="op">)</span>,</span>
 <span>          <span class="st">"+ min_angle = 25, holes erased"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-toy-plot-1.png" width="100%"></p>
+<p><img src="reference/figures/README-toy-plot-1.png" alt="" width="100%"></p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span><span class="va">op</span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -123,7 +123,7 @@
 <span><span class="co">#&gt; 2100 1119  521</span></span>
 <span><span class="va">op</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu">plot_mesh</span><span class="op">(</span><span class="va">m</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-nc-1.png" width="100%"></p>
+<p><img src="reference/figures/README-nc-1.png" alt="" width="100%"></p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span><span class="va">op</span><span class="op">)</span></span></code></pre></div>
 <p>The counties tile the state, so there are no holes, but a county two boundaries in from the coast has depth 3, and so on: depth is the peel layer, a count of constraint crossings from outside, not an inside/outside flag in general. It is computed topologically from the mesh alone, before anything is erased, which makes it a cheap first cut for classifying triangles by region: nested rings get odd/even, a coverage gets a boundary-distance ordering, and only ties within a layer need a geometric lookup.</p>
