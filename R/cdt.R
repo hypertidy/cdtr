@@ -25,36 +25,22 @@
 #'   crossing point, "error" fails, "ignore" skips the check
 #' @param angle_first when both criteria are given, refine by angle before area
 #'   (default is area then angle; the two orderings differ little)
-#' @return list with P (vertices), T (1-based triangle indices), S (fixed edges),
-#'   depth (per-triangle constraint layer depth: constraint crossings from the
-#'   outside, so 0 is outside and for nested rings odd is inside, even a hole),
-#'   n_input (vertices after dedupe, before Steiner), input_map (input vertex ->
-#'   deduped vertex index), min_edge_length (the value used), and unrefined, a
-#'   data frame with one row per refinement pass counting what CDT could not
-#'   refine (short edges, sharp fixed corners, and so on)
+#' @param depth_distinct also return `depth_distinct`, a per-triangle depth that
+#'   counts a doubled (overlapping) boundary once rather than once per copy. The
+#'   default `depth` counts per copy; the two differ only where the only path
+#'   from outside a triangle crosses a shared, doubled boundary.
+#' @return list with P (vertices), T (1-based triangle indices, wound
+#'   counter-clockwise / positive signed area), S (fixed edges), depth
+#'   (per-triangle constraint layer depth: 0 outside, odd inside, even hole;
+#'   a doubled shared boundary is counted once per copy), origin (a factor
+#'   giving each vertex's provenance: "input", "crossing" or "steiner"),
+#'   n_input (vertices after dedupe, before Steiner), n_crossing (vertices
+#'   added resolving crossing constraints), input_map (input vertex -> deduped
+#'   vertex index), min_edge_length (the value used), and unrefined, a data
+#'   frame with one row per refinement pass counting what CDT could not refine
+#'   (short edges, sharp fixed corners, and so on). When `depth_distinct = TRUE`
+#'   the list also has depth_distinct (a doubled boundary counted once).
 #' @export
-#' @examples
-#' ## a square with a square hole: two closed rings of segments
-#' x <- c(0, 1, 1, 0, 0.25, 0.75, 0.75, 0.25)
-#' y <- c(0, 0, 1, 1, 0.25, 0.25, 0.75, 0.75)
-#' s0 <- 1:8; s1 <- c(2, 3, 4, 1, 6, 7, 8, 5)
-#'
-#' ## constrained: every segment is an edge, depth says where each triangle is
-#' r <- cdt_triangulate(x, y, s0, s1)
-#' r$depth    ## 1 = inside the outer ring, 2 = inside the hole (nested rings)
-#'
-#' ## refined, and the hole removed
-#' r2 <- cdt_triangulate(x, y, s0, s1, max_area = 0.01, min_angle = 25, erase = "holes")
-#' nrow(r2$T); r2$unrefined
-#'
-#' op <- par(mfrow = c(1, 2), mar = rep(0.5, 4))
-#' for (m in list(r, r2)) {
-#'   e <- cdt_edges(m)
-#'   plot(m$P, asp = 1, axes = FALSE, xlab = "", ylab = "", pch = ".")
-#'   segments(m$P[e[, 1], 1], m$P[e[, 1], 2], m$P[e[, 2], 1], m$P[e[, 2], 2], col = "grey40")
-#'   segments(m$P[m$S[, 1], 1], m$P[m$S[, 1], 2], m$P[m$S[, 2], 1], m$P[m$S[, 2], 2], lwd = 2)
-#' }
-#' par(op)
 cdt_triangulate <- function(x, y, s0 = NULL, s1 = NULL,
                             max_area = NULL, min_angle = NULL,
                             max_steiner = Inf,
@@ -62,7 +48,7 @@ cdt_triangulate <- function(x, y, s0 = NULL, s1 = NULL,
                             conforming = FALSE,
                             erase = c("outer", "hull", "holes"),
                             intersect = c("resolve", "error", "ignore"),
-                            angle_first = FALSE) {
+                            angle_first = FALSE, depth_distinct = FALSE) {
   if (is.null(s0)) s0 <- integer(0)
   if (is.null(s1)) s1 <- integer(0)
   erase <- match.arg(erase)
@@ -81,10 +67,23 @@ cdt_triangulate <- function(x, y, s0 = NULL, s1 = NULL,
                              if (is.null(max_area)) -1 else max_area,
                              if (is.null(min_angle)) -1 else min_angle,
                              if (is.infinite(max_steiner)) -1L else as.integer(max_steiner),
-                             min_edge_length, conforming, erase, intersect, angle_first)
+                             min_edge_length, conforming, erase, intersect, angle_first,
+                             depth_distinct)
   out$min_edge_length <- min_edge_length
   out$unrefined <- unrefined_frame(out$unrefined)
+  out$origin <- vertex_origin(nrow(out$P), out$n_input, out$n_crossing, conforming)
   out
+}
+
+## Per-vertex provenance (meshspec `origin`): input vertices first, then
+## vertices added while handling constraints, then refinement Steiner points.
+## Constraint-handling points are crossing-resolution points in the usual case;
+## in conforming mode they are on-segment subdivisions, so count as Steiner.
+vertex_origin <- function(nv, n_input, n_crossing, conforming) {
+  n_steiner <- nv - n_input - n_crossing
+  mid <- if (conforming) "steiner" else "crossing"
+  factor(rep(c("input", mid, "steiner"), c(n_input, n_crossing, n_steiner)),
+         levels = c("input", "crossing", "steiner"))
 }
 
 #' Default refinement edge-length floor
@@ -114,7 +113,7 @@ unrefined_frame <- function(u) {
             "sharpFixedCorner", "shortEdges", "splitVertexInvalid")
   if (length(u) == 0L) {
     return(cbind(data.frame(criterion = character(0)),
-                 as.data.frame(setNames(replicate(length(cols), integer(0), simplify = FALSE), cols))))
+                 as.data.frame(stats::setNames(replicate(length(cols), integer(0), simplify = FALSE), cols))))
   }
   rows <- lapply(names(u), function(nm) data.frame(criterion = nm, as.list(u[[nm]])))
   out <- do.call(rbind, rows)
@@ -130,6 +129,26 @@ cdt_pslg <- function(p, ...) {
   cdt_triangulate(p$P[, 1], p$P[, 2], p$S[, 1], p$S[, 2], ...)
 }
 
+#' Unique edges of a triangulation
+#'
+#' The index pairs of every triangle edge once, for plotting with
+#' [graphics::segments()] or for building an edge table.
+#'
+#' @param x result of [cdt_triangulate()]
+#' @return integer matrix (2 columns) of 1-based vertex indices
+#' @export
+#' @examples
+#' r <- cdt_triangulate(c(0, 1, 1, 0, 0.5), c(0, 0, 1, 1, 0.5))
+#' e <- cdt_edges(r)
+#' plot(r$P, asp = 1)
+#' segments(r$P[e[, 1], 1], r$P[e[, 1], 2], r$P[e[, 2], 1], r$P[e[, 2], 2])
+cdt_edges <- function(x) {
+  T <- x$T
+  e <- rbind(T[, 1:2], T[, 2:3], T[, c(3, 1)])
+  e <- cbind(pmin(e[, 1], e[, 2]), pmax(e[, 1], e[, 2]))
+  unique(e)
+}
+
 #' Interpolate per-vertex attributes onto points
 #'
 #' Linear (barycentric) interpolation of a matrix of per-vertex values from a
@@ -143,9 +162,6 @@ cdt_pslg <- function(p, ...) {
 #' @param xq,yq query coordinates
 #' @return a length(xq) x k matrix (column names kept from `A`)
 #' @export
-#' @examples
-#' P <- cbind(c(0, 1, 0), c(0, 0, 1)); T <- matrix(1:3, 1)
-#' cdt_interpolate(P, T, cbind(v = c(10, 20, 30)), c(0.25, 0.5), c(0.25, 0.25))
 cdt_interpolate <- function(P, T, A, xq, yq) {
   A <- as.matrix(A); storage.mode(A) <- "double"
   P <- as.matrix(P); storage.mode(P) <- "double"
@@ -167,11 +183,6 @@ cdt_interpolate <- function(P, T, A, xq, yq) {
 #' @param PA numeric matrix with one row per input vertex (or NULL)
 #' @param ... passed to [cdt_triangulate()]
 #' @export
-#' @examples
-#' x <- c(0, 1, 1, 0); y <- c(0, 0, 1, 1)
-#' z <- 2 * x + 3 * y                 ## a linear field, reproduced exactly
-#' r <- cdt_triangulate_attr(x, y, 1:4, c(2, 3, 4, 1), PA = cbind(z = z), max_area = 0.02)
-#' range(r$PA[, "z"] - (2 * r$P[, 1] + 3 * r$P[, 2]))
 cdt_triangulate_attr <- function(x, y, s0 = NULL, s1 = NULL, PA = NULL, ...) {
   r <- cdt_triangulate(x, y, s0, s1, ...)
   if (is.null(PA)) return(r)
@@ -201,24 +212,4 @@ cdt_triangulate_attr <- function(x, y, s0 = NULL, s1 = NULL, PA = NULL, ...) {
   }
   r$PA <- out
   r
-}
-
-#' Unique edges of a triangulation
-#'
-#' The index pairs of every triangle edge once, for plotting with
-#' [graphics::segments()] or for building an edge table.
-#'
-#' @param x result of [cdt_triangulate()]
-#' @return integer matrix (2 columns) of 1-based vertex indices
-#' @export
-#' @examples
-#' r <- cdt_triangulate(c(0, 1, 1, 0, 0.5), c(0, 0, 1, 1, 0.5))
-#' e <- cdt_edges(r)
-#' plot(r$P, asp = 1)
-#' segments(r$P[e[, 1], 1], r$P[e[, 1], 2], r$P[e[, 2], 1], r$P[e[, 2], 2])
-cdt_edges <- function(x) {
-  T <- x$T
-  e <- rbind(T[, 1:2], T[, 2:3], T[, c(3, 1)])
-  e <- cbind(pmin(e[, 1], e[, 2]), pmax(e[, 1], e[, 2]))
-  unique(e)
 }

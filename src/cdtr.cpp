@@ -3,6 +3,7 @@
 #include <cpp11.hpp>
 #include <cpp11/matrix.hpp>
 #include <limits>
+#include <utility>
 #include <vector>
 #include "CDT/CDT.h"
 
@@ -27,7 +28,7 @@ list cdt_triangulate_cpp(doubles x, doubles y, integers s0, integers s1,
                          double max_area, double min_angle_deg,
                          int max_steiner, double min_edge_length,
                          bool conforming, int erase_mode, int intersect_mode,
-                         bool angle_first) {
+                         bool angle_first, bool want_depth_distinct) {
   // erase_mode: 0 = convex hull, 1 = outer (RTriangle -p semantics), 2 = outer + holes
   // intersect_mode: 0 = NotAllowed, 1 = TryResolve, 2 = DontCheck
   const R_xlen_t n = x.size();
@@ -53,9 +54,14 @@ list cdt_triangulate_cpp(doubles x, doubles y, integers s0, integers s1,
   CDT::Triangulation<double> cdt(CDT::VertexInsertionOrder::Auto, ice, 0.0);
   cdt.insertVertices(verts);
   const int n_input = static_cast<int>(verts.size());
+  // Vertex count after the input is in (includes the super-triangle); the
+  // difference against the post-edge count is how many vertices edge handling
+  // added, i.e. crossing-constraint resolution points (or conforming points).
+  const std::size_t nv_after_insert = cdt.vertices.size();
   if (!edges.empty()) {
     if (conforming) cdt.conformToEdges(edges); else cdt.insertEdges(edges);
   }
+  const int n_crossing = static_cast<int>(cdt.vertices.size() - nv_after_insert);
 
   // Region classification before anything is erased: layer depth is the
   // number of constraint boundaries crossed from the outside (0 = outside,
@@ -92,12 +98,26 @@ list cdt_triangulate_cpp(doubles x, doubles y, integers s0, integers s1,
     depths = cdt.calculateTriangleDepths();
   }
 
+  // Optional depth that counts a doubled (overlapping) boundary once rather
+  // than once per copy: clear the overlap counts and redo the same topological
+  // peel, then restore them.
+  std::vector<CDT::LayerDepth> depths_distinct;
+  if (want_depth_distinct) {
+    auto saved_overlap = cdt.overlapCount;
+    cdt.overlapCount.clear();
+    depths_distinct = cdt.calculateTriangleDepths();
+    cdt.overlapCount = saved_overlap;
+  }
+
   // Depths for the triangles that survive, in surviving order (removal is
   // order-preserving in CDT::Triangulation::removeTriangles).
-  std::vector<int> kept_depth;
+  std::vector<int> kept_depth, kept_depth_distinct;
   kept_depth.reserve(cdt.triangles.size());
   for (std::size_t i = 0; i < cdt.triangles.size(); ++i) {
-    if (!to_erase.count(static_cast<CDT::TriInd>(i))) kept_depth.push_back((int)depths[i]);
+    if (!to_erase.count(static_cast<CDT::TriInd>(i))) {
+      kept_depth.push_back((int)depths[i]);
+      if (want_depth_distinct) kept_depth_distinct.push_back((int)depths_distinct[i]);
+    }
   }
 
   cdt.finalizeTriangulation(to_erase);
@@ -108,8 +128,17 @@ list cdt_triangulate_cpp(doubles x, doubles y, integers s0, integers s1,
 
   const int nt = static_cast<int>(cdt.triangles.size());
   writable::integers_matrix<> T(nt, 3);
-  for (int i = 0; i < nt; ++i)
-    for (int j = 0; j < 3; ++j) T(i, j) = static_cast<int>(cdt.triangles[i].vertices[j]) + 1;
+  for (int i = 0; i < nt; ++i) {
+    int a = static_cast<int>(cdt.triangles[i].vertices[0]);
+    int b = static_cast<int>(cdt.triangles[i].vertices[1]);
+    int c = static_cast<int>(cdt.triangles[i].vertices[2]);
+    // Enforce counter-clockwise winding (positive signed area).
+    const double area2 =
+      (cdt.vertices[b].x - cdt.vertices[a].x) * (cdt.vertices[c].y - cdt.vertices[a].y) -
+      (cdt.vertices[c].x - cdt.vertices[a].x) * (cdt.vertices[b].y - cdt.vertices[a].y);
+    if (area2 < 0) std::swap(b, c);
+    T(i, 0) = a + 1; T(i, 1) = b + 1; T(i, 2) = c + 1;
+  }
 
   const int ns = static_cast<int>(cdt.fixedEdges.size());
   writable::integers_matrix<> S(ns, 2);
@@ -125,12 +154,22 @@ list cdt_triangulate_cpp(doubles x, doubles y, integers s0, integers s1,
   writable::integers depth(kept_depth.size());
   for (std::size_t i = 0; i < kept_depth.size(); ++i) depth[i] = kept_depth[i];
 
-  return writable::list({
+  writable::list out({
     "P"_nm = P,
     "T"_nm = T,
     "S"_nm = S,
     "depth"_nm = depth,
     "n_input"_nm = n_input,
+    "n_crossing"_nm = n_crossing,
     "input_map"_nm = dup_map,
     "unrefined"_nm = unrefined});
+
+  if (want_depth_distinct) {
+    writable::integers depth_distinct(kept_depth_distinct.size());
+    for (std::size_t i = 0; i < kept_depth_distinct.size(); ++i)
+      depth_distinct[i] = kept_depth_distinct[i];
+    out.push_back({"depth_distinct"_nm = depth_distinct});
+  }
+
+  return out;
 }

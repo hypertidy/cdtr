@@ -1,7 +1,15 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^README\.Rmd$
+^README\.html$
 ^\.github$
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
+^cran-comments\.md$
+^CRAN-SUBMISSION$
+^Rplots\.pdf$
+^a\.sink$
+^\.Rhistory$
+^inst/benchmarks$
+^\.posit$

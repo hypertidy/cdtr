@@ -6,3 +6,4 @@
 .quarto
 src/*.o
 src/*.so
+.posit/assistant

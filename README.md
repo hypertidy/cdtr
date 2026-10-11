@@ -3,6 +3,10 @@
 
 # cdtr
 
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/hypertidy/cdtr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/hypertidy/cdtr/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
+
 Constrained Delaunay triangulation with refinement for R, binding the
 header-only [CDT](https://github.com/artem-ogre/CDT) library (MPL-2.0).
 It takes the same input as a planar straight line graph (vertices,

@@ -107,6 +107,69 @@ test_that("attributes are carried onto Steiner vertices by linear interpolation"
   expect_equal(r0$PA[, "z"], z)
 })
 
+test_that("triangles are wound counter-clockwise (positive signed area)", {
+  signed_area2 <- function(P, T) {
+    a <- P[T[, 1], , drop = FALSE]; b <- P[T[, 2], , drop = FALSE]; c <- P[T[, 3], , drop = FALSE]
+    (b[, 1] - a[, 1]) * (c[, 2] - a[, 2]) - (c[, 1] - a[, 1]) * (b[, 2] - a[, 2])
+  }
+  d <- sq()
+  expect_true(all(signed_area2(d <- cdt_triangulate(d$x, d$y, d$s0, d$s1)$P,
+                               cdt_triangulate(sq()$x, sq()$y, sq()$s0, sq()$s1)$T) > 0))
+  r <- cdt_triangulate(sq()$x, sq()$y, sq()$s0, sq()$s1, max_area = 0.01)
+  expect_true(all(signed_area2(r$P, r$T) > 0))
+  set.seed(4127); rh <- cdt_triangulate(runif(40), runif(40))
+  expect_true(all(signed_area2(rh$P, rh$T) > 0))
+})
+
+test_that("origin separates input, crossing, and Steiner vertices", {
+  ## crossing diagonals of a square -> one crossing vertex, no Steiner
+  rc <- cdt_triangulate(c(0, 1, 0, 1), c(0, 1, 1, 0), c(1, 3), c(2, 4), erase = "hull")
+  expect_s3_class(rc$origin, "factor")
+  expect_equal(levels(rc$origin), c("input", "crossing", "steiner"))
+  expect_equal(length(rc$origin), nrow(rc$P))
+  expect_equal(unname(table(rc$origin)[c("input", "crossing", "steiner")]),
+               c(4L, 1L, 0L), ignore_attr = TRUE)
+  ## refinement adds Steiner vertices, not crossings
+  d <- sq()
+  rr <- cdt_triangulate(d$x, d$y, d$s0, d$s1, max_area = 0.01)
+  expect_equal(sum(rr$origin == "input"), 8L)
+  expect_equal(sum(rr$origin == "crossing"), 0L)
+  expect_gt(sum(rr$origin == "steiner"), 0L)
+})
+
+test_that("a doubled shared boundary is counted once per copy in depth", {
+  ## two unit squares sharing the edge x = 1, each ring supplied independently
+  x <- c(0, 1, 1, 0, 1, 2, 2, 1); y <- c(0, 0, 1, 1, 0, 0, 1, 1)
+  r <- cdt_triangulate(x, y, c(1, 2, 3, 4, 5, 6, 7, 8), c(2, 3, 4, 1, 6, 7, 8, 5),
+                       erase = "outer")
+  ## both interiors stay at depth 1; the shared edge does not stack to depth 2
+  expect_equal(unique(r$depth), 1L)
+})
+
+test_that("depth_distinct counts a doubled boundary once, and is opt-in", {
+  ## a square whose boundary is supplied twice: one doubled boundary
+  x <- c(0, 1, 1, 0); y <- c(0, 0, 1, 1)
+  s0 <- c(1, 2, 3, 4, 1, 2, 3, 4); s1 <- c(2, 3, 4, 1, 2, 3, 4, 1)
+  r <- cdt_triangulate(x, y, s0, s1, erase = "hull", depth_distinct = TRUE)
+  expect_equal(unique(r$depth), 2L)           # per copy
+  expect_equal(unique(r$depth_distinct), 1L)  # counted once
+  expect_equal(length(r$depth_distinct), nrow(r$T))
+  ## off by default
+  expect_false("depth_distinct" %in% names(cdt_triangulate(x, y, s0, s1, erase = "hull")))
+  ## with no doubling the two agree
+  d <- sq()
+  rr <- cdt_triangulate(d$x, d$y, d$s0, d$s1, depth_distinct = TRUE)
+  expect_equal(rr$depth, rr$depth_distinct)
+})
+
+test_that("cdt_edges returns each triangle edge once", {
+  r <- cdt_triangulate(c(0, 1, 1, 0, 0.5), c(0, 0, 1, 1, 0.5))
+  e <- cdt_edges(r)
+  expect_equal(ncol(e), 2L)
+  expect_true(all(e[, 1] < e[, 2]))
+  expect_equal(nrow(e), nrow(unique(e)))
+})
+
 test_that("cdt_interpolate falls back to nearest vertex outside the mesh", {
   P <- cbind(c(0, 1, 0), c(0, 0, 1)); T <- matrix(1:3, 1)
   expect_equal(cdt_interpolate(P, T, c(10, 20, 30), c(0.25, 5), c(0.25, 5))[, 1], c(17.5, 20))
