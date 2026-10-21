@@ -16,7 +16,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/hypertidy/cdtr/blob/v0.1.0/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/hypertidy/cdtr/blob/main/DESCRIPTION)
 
 Sumner M (2026). *cdtr: Constrained Delaunay Triangulation with
 Refinement*. R package version 0.1.0,
