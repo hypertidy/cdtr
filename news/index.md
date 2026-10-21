@@ -2,6 +2,8 @@
 
 ## cdtr 0.1.0
 
+CRAN release: 2026-10-21
+
 - First release.
 - [`cdt_triangulate()`](https://hypertidy.github.io/cdtr/reference/cdt_triangulate.md)
   wraps the ‘CDT’ C++ library for constrained and conforming Delaunay
