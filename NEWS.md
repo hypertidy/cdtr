@@ -1,3 +1,7 @@
+# cdtr (development version)
+
+* DESCRIPTION reference now uses the CRAN form `Author (year) <doi:...>`.
+
 # cdtr 0.1.0
 
 * First release.
