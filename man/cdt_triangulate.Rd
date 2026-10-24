@@ -19,7 +19,8 @@ cdt_triangulate(
   erase = c("outer", "hull", "holes"),
   intersect = c("resolve", "error", "ignore"),
   angle_first = FALSE,
-  depth_distinct = FALSE
+  depth_distinct = FALSE,
+  edge_sources = FALSE
 )
 }
 \arguments{
@@ -61,6 +62,9 @@ crossing point, "error" fails, "ignore" skips the check}
 counts a doubled (overlapping) boundary once rather than once per copy. The
 default \code{depth} counts per copy; the two differ only where the only path
 from outside a triangle crosses a shared, doubled boundary.}
+
+\item{edge_sources}{also return \code{edge_sources}, a data frame with one row
+per fixed edge and input segment covering it (see Value)}
 }
 \value{
 list with P (vertices), T (1-based triangle indices, wound
@@ -74,6 +78,13 @@ vertex index), min_edge_length (the value used), and unrefined, a data
 frame with one row per refinement pass counting what CDT could not refine
 (short edges, sharp fixed corners, and so on). When \code{depth_distinct = TRUE}
 the list also has depth_distinct (a doubled boundary counted once).
+When \code{edge_sources = TRUE} the list also has edge_sources, a data frame
+with columns \code{edge} (row in S), \code{segment} (position of the input segment
+in \code{s0}, \code{s1}) and \code{forward} (TRUE when the input segment runs the same
+way as the S row, from its first to its second vertex). Every input
+segment covering an edge has its own row, through crossings, splits and
+refinement, so an edge shared by k input segments (duplicates included)
+has k rows. Zero-length input segments have no rows.
 }
 \description{
 Thin binding to the artem-ogre/CDT library. Input mirrors RTriangle::pslg:
@@ -96,6 +107,10 @@ r2 <- cdt_triangulate(x, y, s0, s1, erase = "holes",
 table(r2$origin)
 plot(r2$P, asp = 1, pch = ".")
 polygon(r2$P[t(cbind(r2$T, NA)), ], col = "grey90")
+
+## which input segments make up each fixed edge
+r4 <- cdt_triangulate(x, y, s0, s1, max_area = 0.05, edge_sources = TRUE)
+head(r4$edge_sources)
 
 ## points only: Delaunay triangulation of the convex hull
 set.seed(1)
