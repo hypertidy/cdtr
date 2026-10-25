@@ -6,10 +6,10 @@
 #include <R_ext/Visibility.h>
 
 // cdtr.cpp
-list cdt_triangulate_cpp(doubles x, doubles y, integers s0, integers s1, double max_area, double min_angle_deg, int max_steiner, double min_edge_length, bool conforming, int erase_mode, int intersect_mode, bool angle_first, bool want_depth_distinct);
-extern "C" SEXP _cdtr_cdt_triangulate_cpp(SEXP x, SEXP y, SEXP s0, SEXP s1, SEXP max_area, SEXP min_angle_deg, SEXP max_steiner, SEXP min_edge_length, SEXP conforming, SEXP erase_mode, SEXP intersect_mode, SEXP angle_first, SEXP want_depth_distinct) {
+list cdt_triangulate_cpp(doubles x, doubles y, integers s0, integers s1, double max_area, double min_angle_deg, int max_steiner, double min_edge_length, bool conforming, int erase_mode, int intersect_mode, bool angle_first, bool want_depth_distinct, bool want_edge_sources);
+extern "C" SEXP _cdtr_cdt_triangulate_cpp(SEXP x, SEXP y, SEXP s0, SEXP s1, SEXP max_area, SEXP min_angle_deg, SEXP max_steiner, SEXP min_edge_length, SEXP conforming, SEXP erase_mode, SEXP intersect_mode, SEXP angle_first, SEXP want_depth_distinct, SEXP want_edge_sources) {
   BEGIN_CPP11
-    return cpp11::as_sexp(cdt_triangulate_cpp(cpp11::as_cpp<cpp11::decay_t<doubles>>(x), cpp11::as_cpp<cpp11::decay_t<doubles>>(y), cpp11::as_cpp<cpp11::decay_t<integers>>(s0), cpp11::as_cpp<cpp11::decay_t<integers>>(s1), cpp11::as_cpp<cpp11::decay_t<double>>(max_area), cpp11::as_cpp<cpp11::decay_t<double>>(min_angle_deg), cpp11::as_cpp<cpp11::decay_t<int>>(max_steiner), cpp11::as_cpp<cpp11::decay_t<double>>(min_edge_length), cpp11::as_cpp<cpp11::decay_t<bool>>(conforming), cpp11::as_cpp<cpp11::decay_t<int>>(erase_mode), cpp11::as_cpp<cpp11::decay_t<int>>(intersect_mode), cpp11::as_cpp<cpp11::decay_t<bool>>(angle_first), cpp11::as_cpp<cpp11::decay_t<bool>>(want_depth_distinct)));
+    return cpp11::as_sexp(cdt_triangulate_cpp(cpp11::as_cpp<cpp11::decay_t<doubles>>(x), cpp11::as_cpp<cpp11::decay_t<doubles>>(y), cpp11::as_cpp<cpp11::decay_t<integers>>(s0), cpp11::as_cpp<cpp11::decay_t<integers>>(s1), cpp11::as_cpp<cpp11::decay_t<double>>(max_area), cpp11::as_cpp<cpp11::decay_t<double>>(min_angle_deg), cpp11::as_cpp<cpp11::decay_t<int>>(max_steiner), cpp11::as_cpp<cpp11::decay_t<double>>(min_edge_length), cpp11::as_cpp<cpp11::decay_t<bool>>(conforming), cpp11::as_cpp<cpp11::decay_t<int>>(erase_mode), cpp11::as_cpp<cpp11::decay_t<int>>(intersect_mode), cpp11::as_cpp<cpp11::decay_t<bool>>(angle_first), cpp11::as_cpp<cpp11::decay_t<bool>>(want_depth_distinct), cpp11::as_cpp<cpp11::decay_t<bool>>(want_edge_sources)));
   END_CPP11
 }
 // interpolate.cpp
@@ -23,7 +23,7 @@ extern "C" SEXP _cdtr_cdt_interpolate_cpp(SEXP P, SEXP T, SEXP A, SEXP xq, SEXP 
 extern "C" {
 static const R_CallMethodDef CallEntries[] = {
     {"_cdtr_cdt_interpolate_cpp", (DL_FUNC) &_cdtr_cdt_interpolate_cpp,  5},
-    {"_cdtr_cdt_triangulate_cpp", (DL_FUNC) &_cdtr_cdt_triangulate_cpp, 13},
+    {"_cdtr_cdt_triangulate_cpp", (DL_FUNC) &_cdtr_cdt_triangulate_cpp, 14},
     {NULL, NULL, 0}
 };
 }

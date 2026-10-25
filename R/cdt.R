@@ -29,6 +29,8 @@
 #'   counts a doubled (overlapping) boundary once rather than once per copy. The
 #'   default `depth` counts per copy; the two differ only where the only path
 #'   from outside a triangle crosses a shared, doubled boundary.
+#' @param edge_sources also return `edge_sources`, a data frame with one row
+#'   per fixed edge and input segment covering it (see Value)
 #' @return list with P (vertices), T (1-based triangle indices, wound
 #'   counter-clockwise / positive signed area), S (fixed edges), depth
 #'   (per-triangle constraint layer depth: 0 outside, odd inside, even hole;
@@ -40,6 +42,13 @@
 #'   frame with one row per refinement pass counting what CDT could not refine
 #'   (short edges, sharp fixed corners, and so on). When `depth_distinct = TRUE`
 #'   the list also has depth_distinct (a doubled boundary counted once).
+#'   When `edge_sources = TRUE` the list also has edge_sources, a data frame
+#'   with columns `edge` (row in S), `segment` (position of the input segment
+#'   in `s0`, `s1`) and `forward` (TRUE when the input segment runs the same
+#'   way as the S row, from its first to its second vertex). Every input
+#'   segment covering an edge has its own row, through crossings, splits and
+#'   refinement, so an edge shared by k input segments (duplicates included)
+#'   has k rows. Zero-length input segments have no rows.
 #' @export
 #' @examples
 #' ## unit square with a square hole: two closed rings of 4 vertices
@@ -59,6 +68,10 @@
 #' plot(r2$P, asp = 1, pch = ".")
 #' polygon(r2$P[t(cbind(r2$T, NA)), ], col = "grey90")
 #'
+#' ## which input segments make up each fixed edge
+#' r4 <- cdt_triangulate(x, y, s0, s1, max_area = 0.05, edge_sources = TRUE)
+#' head(r4$edge_sources)
+#'
 #' ## points only: Delaunay triangulation of the convex hull
 #' set.seed(1)
 #' r3 <- cdt_triangulate(runif(30), runif(30))
@@ -70,7 +83,8 @@ cdt_triangulate <- function(x, y, s0 = NULL, s1 = NULL,
                             conforming = FALSE,
                             erase = c("outer", "hull", "holes"),
                             intersect = c("resolve", "error", "ignore"),
-                            angle_first = FALSE, depth_distinct = FALSE) {
+                            angle_first = FALSE, depth_distinct = FALSE,
+                            edge_sources = FALSE) {
   if (is.null(s0)) s0 <- integer(0)
   if (is.null(s1)) s1 <- integer(0)
   erase <- match.arg(erase)
@@ -90,7 +104,12 @@ cdt_triangulate <- function(x, y, s0 = NULL, s1 = NULL,
                              if (is.null(min_angle)) -1 else min_angle,
                              if (is.infinite(max_steiner)) -1L else as.integer(max_steiner),
                              min_edge_length, conforming, erase, intersect, angle_first,
-                             depth_distinct)
+                             depth_distinct, edge_sources)
+  if (edge_sources) {
+    es <- out$edge_sources
+    out$edge_sources <- data.frame(edge = es$edge, segment = es$segment,
+                                   forward = es$forward)
+  }
   out$min_edge_length <- min_edge_length
   out$unrefined <- unrefined_frame(out$unrefined)
   out$origin <- vertex_origin(nrow(out$P), out$n_input, out$n_crossing, conforming)
