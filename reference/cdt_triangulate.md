@@ -22,7 +22,8 @@ cdt_triangulate(
   erase = c("outer", "hull", "holes"),
   intersect = c("resolve", "error", "ignore"),
   angle_first = FALSE,
-  depth_distinct = FALSE
+  depth_distinct = FALSE,
+  edge_sources = FALSE
 )
 ```
 
@@ -95,6 +96,11 @@ cdt_triangulate(
   default `depth` counts per copy; the two differ only where the only
   path from outside a triangle crosses a shared, doubled boundary.
 
+- edge_sources:
+
+  also return `edge_sources`, a data frame with one row per fixed edge
+  and input segment covering it (see Value)
+
 ## Value
 
 list with P (vertices), T (1-based triangle indices, wound
@@ -108,7 +114,14 @@ deduped vertex index), min_edge_length (the value used), and unrefined,
 a data frame with one row per refinement pass counting what CDT could
 not refine (short edges, sharp fixed corners, and so on). When
 `depth_distinct = TRUE` the list also has depth_distinct (a doubled
-boundary counted once).
+boundary counted once). When `edge_sources = TRUE` the list also has
+edge_sources, a data frame with columns `edge` (row in S), `segment`
+(position of the input segment in `s0`, `s1`) and `forward` (TRUE when
+the input segment runs the same way as the S row, from its first to its
+second vertex). Every input segment covering an edge has its own row,
+through crossings, splits and refinement, so an edge shared by k input
+segments (duplicates included) has k rows. Zero-length input segments
+have no rows.
 
 ## Examples
 
@@ -136,6 +149,17 @@ table(r2$origin)
 plot(r2$P, asp = 1, pch = ".")
 polygon(r2$P[t(cbind(r2$T, NA)), ], col = "grey90")
 
+
+## which input segments make up each fixed edge
+r4 <- cdt_triangulate(x, y, s0, s1, max_area = 0.05, edge_sources = TRUE)
+head(r4$edge_sources)
+#>   edge segment forward
+#> 1    1       1   FALSE
+#> 2    2       6    TRUE
+#> 3    3       3   FALSE
+#> 4    4       4    TRUE
+#> 5    5       4   FALSE
+#> 6    6       3    TRUE
 
 ## points only: Delaunay triangulation of the convex hull
 set.seed(1)
