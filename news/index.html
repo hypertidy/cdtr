@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">cdtr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,9 +34,9 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="cdtr-development-version">cdtr (development version)<a class="anchor" aria-label="anchor" href="#cdtr-development-version"></a></h2>
-<ul><li>
-<code>cdt_triangulate(edge_sources = TRUE)</code> returns <code>edge_sources</code>, one row per fixed edge and covering input segment (<code>edge</code>, <code>segment</code>, <code>forward</code>), tracked through crossings, splits and refinement. This is the constraint-to-input map of the mesh spec, and lets callers label regions by which inputs cover them (winding per input), which <code>depth</code> cannot do. An input segment lying on a longer collinear input is no longer lost from CDT’s provenance when refinement splits the shared edge.</li>
-<li>DESCRIPTION reference now uses the CRAN form <code>Author (year) &lt;doi:...&gt;</code>.</li>
+<ul><li><p>Version 0.1.0.9000, so that packages using <code>edge_sources</code> (polymer) can require it.</p></li>
+<li><p><code>cdt_triangulate(edge_sources = TRUE)</code> returns <code>edge_sources</code>, one row per fixed edge and covering input segment (<code>edge</code>, <code>segment</code>, <code>forward</code>), tracked through crossings, splits and refinement. This is the constraint-to-input map of the mesh spec, and lets callers label regions by which inputs cover them (winding per input), which <code>depth</code> cannot do. An input segment lying on a longer collinear input is no longer lost from CDT’s provenance when refinement splits the shared edge.</p></li>
+<li><p>DESCRIPTION reference now uses the CRAN form <code>Author (year) &lt;doi:...&gt;</code>.</p></li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.0" id="cdtr-010">cdtr 0.1.0<a class="anchor" aria-label="anchor" href="#cdtr-010"></a></h2><p class="text-muted">CRAN release: 2026-10-21</p>

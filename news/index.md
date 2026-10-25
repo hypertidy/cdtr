@@ -2,6 +2,9 @@
 
 ## cdtr (development version)
 
+- Version 0.1.0.9000, so that packages using `edge_sources` (polymer)
+  can require it.
+
 - `cdt_triangulate(edge_sources = TRUE)` returns `edge_sources`, one row
   per fixed edge and covering input segment (`edge`, `segment`,
   `forward`), tracked through crossings, splits and refinement. This is
@@ -10,6 +13,7 @@
   cannot do. An input segment lying on a longer collinear input is no
   longer lost from CDT’s provenance when refinement splits the shared
   edge.
+
 - DESCRIPTION reference now uses the CRAN form
   `Author (year) <doi:...>`.
 
