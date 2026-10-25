@@ -1,5 +1,8 @@
 # cdtr (development version)
 
+* Version 0.1.0.9000, so that packages using `edge_sources` (polymer) can
+  require it.
+
 * `cdt_triangulate(edge_sources = TRUE)` returns `edge_sources`, one row per
   fixed edge and covering input segment (`edge`, `segment`, `forward`),
   tracked through crossings, splits and refinement. This is the
