@@ -19,10 +19,18 @@ extern "C" SEXP _cdtr_cdt_interpolate_cpp(SEXP P, SEXP T, SEXP A, SEXP xq, SEXP 
     return cpp11::as_sexp(cdt_interpolate_cpp(cpp11::as_cpp<cpp11::decay_t<doubles_matrix<>>>(P), cpp11::as_cpp<cpp11::decay_t<integers_matrix<>>>(T), cpp11::as_cpp<cpp11::decay_t<doubles_matrix<>>>(A), cpp11::as_cpp<cpp11::decay_t<doubles>>(xq), cpp11::as_cpp<cpp11::decay_t<doubles>>(yq)));
   END_CPP11
 }
+// locate.cpp
+integers cdt_locate_cpp(doubles_matrix<> P, integers_matrix<> T, doubles xq, doubles yq);
+extern "C" SEXP _cdtr_cdt_locate_cpp(SEXP P, SEXP T, SEXP xq, SEXP yq) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(cdt_locate_cpp(cpp11::as_cpp<cpp11::decay_t<doubles_matrix<>>>(P), cpp11::as_cpp<cpp11::decay_t<integers_matrix<>>>(T), cpp11::as_cpp<cpp11::decay_t<doubles>>(xq), cpp11::as_cpp<cpp11::decay_t<doubles>>(yq)));
+  END_CPP11
+}
 
 extern "C" {
 static const R_CallMethodDef CallEntries[] = {
     {"_cdtr_cdt_interpolate_cpp", (DL_FUNC) &_cdtr_cdt_interpolate_cpp,  5},
+    {"_cdtr_cdt_locate_cpp",      (DL_FUNC) &_cdtr_cdt_locate_cpp,       4},
     {"_cdtr_cdt_triangulate_cpp", (DL_FUNC) &_cdtr_cdt_triangulate_cpp, 14},
     {NULL, NULL, 0}
 };

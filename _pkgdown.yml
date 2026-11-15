@@ -16,6 +16,7 @@ reference:
   contents:
   - cdt_edges
   - cdt_interpolate
+  - cdt_locate
   - default_min_edge_length
 
 - title: Package

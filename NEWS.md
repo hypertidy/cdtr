@@ -1,5 +1,11 @@
 # cdtr (development version)
 
+* New `cdt_locate()` returns the triangle containing each query point (`NA`
+  outside), using the grid of triangle buckets from `cdt_interpolate()` and
+  exact orientation tests; ties on shared edges go to the lowest triangle.
+  With a triangle-to-feature table this is point-in-polygon for many points.
+  The grid is now one shared, flat structure (`src/grid.h`) used by both.
+
 * Version 0.1.0.9000, so that packages using `edge_sources` (polymer) can
   require it.
 
