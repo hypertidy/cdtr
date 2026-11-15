@@ -7,3 +7,7 @@ cdt_triangulate_cpp <- function(x, y, s0, s1, max_area, min_angle_deg, max_stein
 cdt_interpolate_cpp <- function(P, T, A, xq, yq) {
   .Call(`_cdtr_cdt_interpolate_cpp`, P, T, A, xq, yq)
 }
+
+cdt_locate_cpp <- function(P, T, xq, yq) {
+  .Call(`_cdtr_cdt_locate_cpp`, P, T, xq, yq)
+}

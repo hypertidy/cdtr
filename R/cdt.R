@@ -246,6 +246,38 @@ cdt_interpolate <- function(P, T, A, xq, yq) {
   out
 }
 
+#' Locate points in a triangle mesh
+#'
+#' Find the triangle that contains each query point. This is the point
+#' locator inside [cdt_interpolate()] (a uniform grid of triangle buckets),
+#' with exact orientation tests from the bundled robust predicates, so a
+#' point is never lost to rounding between two triangles. With a triangle to
+#' feature table it answers point-in-polygon for many points at once.
+#'
+#' A point on an edge or vertex shared by several triangles is given to the
+#' lowest triangle index that contains it. Points outside every triangle, and
+#' `NA` points, give `NA`. Triangles may be in either orientation, and
+#' degenerate (zero area) triangles contain no point.
+#'
+#' @inheritParams cdt_interpolate
+#' @return an integer vector, `length(xq)`, of 1-based row indices into `T`
+#'   (`NA` outside the mesh)
+#' @export
+#' @examples
+#' P <- cbind(c(0, 1, 1, 0), c(0, 0, 1, 1))
+#' T <- rbind(c(1, 2, 3), c(1, 3, 4))
+#' ## (0.5, 0.5) is on the shared diagonal: the lower triangle id wins
+#' cdt_locate(P, T, xq = c(0.75, 0.25, 0.5, 2), yq = c(0.25, 0.75, 0.5, 2))
+cdt_locate <- function(P, T, xq, yq) {
+  P <- as.matrix(P); storage.mode(P) <- "double"
+  T <- as.matrix(T); storage.mode(T) <- "integer"
+  stopifnot(ncol(P) == 2L, ncol(T) == 3L, length(xq) == length(yq))
+  if (nrow(T) > 0L && (anyNA(T) || min(T) < 1L || max(T) > nrow(P))) {
+    stop("`T` must index rows of `P`", call. = FALSE)
+  }
+  cdt_locate_cpp(P, T, as.double(xq), as.double(yq))
+}
+
 #' Triangulate with per-vertex attributes carried onto new vertices
 #'
 #' `cdt_triangulate()` plus a `PA` matrix of per-input-vertex attributes
