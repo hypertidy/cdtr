@@ -20,6 +20,8 @@ Helpers for working with triangulation output.
   : Unique edges of a triangulation
 - [`cdt_interpolate()`](https://hypertidy.github.io/cdtr/reference/cdt_interpolate.md)
   : Interpolate per-vertex attributes onto points
+- [`cdt_locate()`](https://hypertidy.github.io/cdtr/reference/cdt_locate.md)
+  : Locate points in a triangle mesh
 - [`default_min_edge_length()`](https://hypertidy.github.io/cdtr/reference/default_min_edge_length.md)
   : Default refinement edge-length floor
 
