@@ -22,6 +22,10 @@ Helpers for working with triangulation output.
   : Interpolate per-vertex attributes onto points
 - [`cdt_locate()`](https://hypertidy.github.io/cdtr/reference/cdt_locate.md)
   : Locate points in a triangle mesh
+- [`cdt_quality()`](https://hypertidy.github.io/cdtr/reference/cdt_quality.md)
+  : Triangle quality measures
+- [`cdt_winding()`](https://hypertidy.github.io/cdtr/reference/cdt_winding.md)
+  : Winding number of each input feature in every triangle
 - [`default_min_edge_length()`](https://hypertidy.github.io/cdtr/reference/default_min_edge_length.md)
   : Default refinement edge-length floor
 

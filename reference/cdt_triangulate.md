@@ -23,7 +23,8 @@ cdt_triangulate(
   intersect = c("resolve", "error", "ignore"),
   angle_first = FALSE,
   depth_distinct = FALSE,
-  edge_sources = FALSE
+  edge_sources = FALSE,
+  holes = NULL
 )
 ```
 
@@ -77,7 +78,10 @@ cdt_triangulate(
   one of "outer" (drop triangles outside the segment-bounded region, as
   RTriangle's `-p` does), "hull" (keep the convex hull), "holes" (also
   drop even-depth regions). With no segments there is no boundary, so
-  "hull" is used.
+  "hull" is used. Note that `"outer"` keeps the triangles inside holes
+  (they have even `depth`), so use `"holes"` when the triangles are to
+  represent polygon area, for example to build a triangle pool or sum
+  areas.
 
 - intersect:
 
@@ -100,6 +104,17 @@ cdt_triangulate(
 
   also return `edge_sources`, a data frame with one row per fixed edge
   and input segment covering it (see Value)
+
+- holes:
+
+  optional hole points, a two-column matrix or a list or data frame with
+  `x` and `y`. The region around each point that is bounded by
+  constraint segments is erased, as with the `H` of an
+  [`RTriangle::pslg()`](https://rdrr.io/pkg/RTriangle/man/pslg.html).
+  This is in addition to `erase`. A point in no bounded region (outside
+  every ring, or with no segments) erases nothing, and a point exactly
+  on a segment is not supported. Holes are applied after the topological
+  `depth` is computed, so `depth` still describes the unerased mesh.
 
 ## Value
 
@@ -149,6 +164,13 @@ table(r2$origin)
 plot(r2$P, asp = 1, pch = ".")
 polygon(r2$P[t(cbind(r2$T, NA)), ], col = "grey90")
 
+
+## erase the region around a point instead (like RTriangle's pslg H)
+r5 <- cdt_triangulate(x, y, s0, s1, holes = cbind(0.5, 0.5))
+table(r5$depth)
+#> 
+#> 1 
+#> 8 
 
 ## which input segments make up each fixed edge
 r4 <- cdt_triangulate(x, y, s0, s1, max_area = 0.05, edge_sources = TRUE)

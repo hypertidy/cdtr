@@ -15,7 +15,8 @@ cdt_pslg(p, ...)
 
 - p:
 
-  a pslg (list with P and S)
+  a pslg (list with P and S, and optionally H, a two-column matrix of
+  hole points, passed as `holes` unless `holes` is given in `...`)
 
 - ...:
 
