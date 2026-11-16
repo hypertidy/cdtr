@@ -217,8 +217,14 @@ many-layer polygon overlay on both.
 
 `cdtr` is the triangulation primitive for the hypertidy mesh packages,
 where it replaces RTriangle (Shewchuk’s Triangle, non-commercial
-licence). The `inst/benchmarks/` scripts compare the two on anglr’s
-Tasmanian contour and cadastre data; the short version is that
-constrained-only output is identical, refinement honours `max_area`
-where Triangle may give up, and Triangle’s refiner is faster per Steiner
-point.
+licence). The `inst/benchmarks/` scripts compare the two on North
+Carolina and anglr’s Tasmanian contour and cadastre data (they need
+anglr, which is no longer on CRAN). Constrained-only, the two give
+meshes of the same size, with the same largest area and smallest angle,
+on all three. With `max_area` both meet the target. cdtr adds more
+Steiner vertices (on the contours, about 14,500 against 5,800 vertices)
+and reports in `unrefined` where it declined to refine, and its smallest
+angles are better on the counties but equally poor on the contours.
+Triangle is faster, by a factor of about three to four in these runs, so
+it is the better choice if speed on a large problem matters more than
+the extra features.
