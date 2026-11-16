@@ -1,13 +1,25 @@
 # cdtr (development version)
 
+This development version collects what will be released as cdtr 0.2.0.
+
+* Two vignettes: "Getting started with cdtr" (depth, `erase`, refinement,
+  crossings, `edge_sources`, locating and interpolating) and "Polygons,
+  triangle pools and wkpool".
+
+* wkpool 0.5.0 uses cdtr (in Suggests) for the constrained triangulation
+  behind `tri_overlay()` and `tri_overlay_relate()`, and the output of
+  `cdt_pslg()` feeds `wkpool::new_wkpool_tri()`. The polygon vignette shows
+  the route; use `erase = "holes"` so hole triangles are dropped. polymer
+  builds on both packages.
+
 * New `cdt_locate()` returns the triangle containing each query point (`NA`
   outside), using the grid of triangle buckets from `cdt_interpolate()` and
   exact orientation tests; ties on shared edges go to the lowest triangle.
   With a triangle-to-feature table this is point-in-polygon for many points.
   The grid is now one shared, flat structure (`src/grid.h`) used by both.
 
-* Version 0.1.0.9000, so that packages using `edge_sources` (polymer) can
-  require it.
+* The development version number (0.1.0.9000 and up) lets packages using
+  `edge_sources` (polymer) require it.
 
 * `cdt_triangulate(edge_sources = TRUE)` returns `edge_sources`, one row per
   fixed edge and covering input segment (`edge`, `segment`, `forward`),

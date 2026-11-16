@@ -21,6 +21,9 @@
 #' @param erase one of "outer" (drop triangles outside the segment-bounded region,
 #'   as RTriangle's `-p` does), "hull" (keep the convex hull), "holes" (also drop
 #'   even-depth regions). With no segments there is no boundary, so "hull" is used.
+#'   Note that `"outer"` keeps the triangles inside holes (they have even
+#'   `depth`), so use `"holes"` when the triangles are to represent polygon
+#'   area, for example to build a triangle pool or sum areas.
 #' @param intersect how crossing constraints are handled: "resolve" inserts the
 #'   crossing point, "error" fails, "ignore" skips the check
 #' @param angle_first when both criteria are given, refine by angle before area

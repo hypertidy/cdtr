@@ -1,6 +1,6 @@
 Package: cdtr
 Title: Constrained Delaunay Triangulation with Refinement
-Version: 0.1.0.9000
+Version: 0.1.0.9001
 Authors@R: c(
     person("Michael", "Sumner", email = "mdsumner@gmail.com", role = c("aut", "cre")),
     person("Leica Geosystems Technology AB", role = "cph",
@@ -21,11 +21,16 @@ Language: en-US
 LinkingTo: cpp11
 Suggests:
     bench,
+    knitr,
+    rmarkdown,
     RTriangle,
     sf,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    wk,
+    wkpool (>= 0.5.0)
+VignetteBuilder: knitr
 Config/testthat/edition: 3
 Roxygen: list(markdown = TRUE)
-Config/roxygen2/version: 8.1.0
+Config/roxygen2/version: 8.1.1
 URL: https://github.com/hypertidy/cdtr, https://hypertidy.github.io/cdtr/
 BugReports: https://github.com/hypertidy/cdtr/issues

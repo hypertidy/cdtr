@@ -140,6 +140,31 @@ range(ma$PA[, "z"] - (2 * ma$P[, 1] + 3 * ma$P[, 2]))
 #> [1] -1.421085e-14  1.421085e-14
 ```
 
+## Where input came from, and where points fall
+
+`edge_sources = TRUE` returns, for every fixed edge, the input segments
+that cover it (through crossings, splits and refinement), so regions can
+be labelled by which inputs cover them. `cdt_locate()` finds the
+triangle holding each query point with exact orientation tests, so a
+point on a shared edge is never lost between triangles.
+
+``` r
+cdt_locate(m$P, m$T, c(-80, -79), c(35.5, 35.5))
+#> [1] 1225  379
+```
+
+## Working with polygons: wkpool and polymer
+
+The [wkpool](https://hypertidy.github.io/wkpool/) package (0.5.0 and
+later) reads any geometry that ‘wk’ handles, shares coincident vertices,
+and uses cdtr for the constrained triangulation behind `tri_overlay()`
+and `tri_overlay_relate()`. The output of `cdt_pslg()` goes straight
+into `wkpool::new_wkpool_tri()`, as shown in
+`vignette("wkpool", package = "cdtr")`. The
+[polymer](https://github.com/hypertidy/polymer) package builds
+many-layer polygon overlay on both. See `vignette("cdtr")` for a tour of
+the package.
+
 ## What this is for
 
 `cdtr` is the triangulation primitive for the hypertidy mesh packages,

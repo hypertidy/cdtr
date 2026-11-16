@@ -6,7 +6,7 @@
 \alias{cdtr-package}
 \title{cdtr: Constrained Delaunay Triangulation with Refinement}
 \description{
-Binding to the 'CDT' header-only C++ library: constrained and conforming Delaunay triangulation, Ruppert refinement by area or minimum angle (Ruppert, 1995, \doi{10.1006/jagm.1995.1021}), resolution of crossing constraints, and topological region depth per triangle. Aimed at replacing 'RTriangle' in 'anglr'.
+Binding to the 'CDT' header-only C++ library: constrained and conforming Delaunay triangulation, Ruppert refinement by area or minimum angle (Ruppert (1995) \doi{10.1006/jagm.1995.1021}), resolution of crossing constraints, and topological region depth per triangle. Aimed at replacing 'RTriangle' in 'anglr'.
 }
 \seealso{
 Useful links:

@@ -50,7 +50,10 @@ when \code{min_edge_length} is NULL}
 
 \item{erase}{one of "outer" (drop triangles outside the segment-bounded region,
 as RTriangle's \code{-p} does), "hull" (keep the convex hull), "holes" (also drop
-even-depth regions). With no segments there is no boundary, so "hull" is used.}
+even-depth regions). With no segments there is no boundary, so "hull" is used.
+Note that \code{"outer"} keeps the triangles inside holes (they have even
+\code{depth}), so use \code{"holes"} when the triangles are to represent polygon
+area, for example to build a triangle pool or sum areas.}
 
 \item{intersect}{how crossing constraints are handled: "resolve" inserts the
 crossing point, "error" fails, "ignore" skips the check}
