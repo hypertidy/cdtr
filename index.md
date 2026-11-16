@@ -86,6 +86,23 @@ edge; by default it is derived from the input (a fraction of the median
 segment length, capped by the area target) so refinement does not
 cascade into sharp input corners. Pass `0` for never-give-up.
 
+## Holes as points
+
+`erase = "holes"` drops the even depths. A hole can also be given as a
+point, as the `H` of an
+[`RTriangle::pslg()`](https://rdrr.io/pkg/RTriangle/man/pslg.html): the
+region around it that is bounded by segments is erased, whatever its
+depth.
+
+``` r
+
+rh <- cdt_triangulate(x, y, s0, s1, holes = cbind(0.5, 0.5))
+table(rh$depth)
+#> 
+#> 1 
+#> 8
+```
+
 ## Real polygons
 
 Any polygon source reduces to the same two tables. With `sf`’s North
@@ -140,20 +157,50 @@ range(ma$PA[, "z"] - (2 * ma$P[, 1] + 3 * ma$P[, 2]))
 #> [1] -1.421085e-14  1.421085e-14
 ```
 
-## Where input came from, and where points fall
+## Mesh quality
 
-`edge_sources = TRUE` returns, for every fixed edge, the input segments
-that cover it (through crossings, splits and refinement), so regions can
-be labelled by which inputs cover them.
-[`cdt_locate()`](https://hypertidy.github.io/cdtr/reference/cdt_locate.md)
-finds the triangle holding each query point with exact orientation
-tests, so a point on a shared edge is never lost between triangles.
+[`cdt_quality()`](https://hypertidy.github.io/cdtr/reference/cdt_quality.md)
+gives the shape of every triangle: area, angles, edge lengths and
+radius-edge ratio.
 
 ``` r
 
-cdt_locate(m$P, m$T, c(-80, -79), c(35.5, 35.5))
-#> [1] 1225  379
+summary(cdt_quality(m)[c("area", "min_angle", "radius_edge")])
+#>       area             min_angle       radius_edge     
+#>  Min.   :6.430e-06   Min.   : 2.546   Min.   : 0.5778  
+#>  1st Qu.:8.159e-04   1st Qu.:21.217   1st Qu.: 0.7234  
+#>  Median :2.977e-03   Median :33.813   Median : 0.8985  
+#>  Mean   :3.376e-03   Mean   :32.666   Mean   : 1.2297  
+#>  3rd Qu.:5.462e-03   3rd Qu.:43.721   3rd Qu.: 1.3816  
+#>  Max.   :9.997e-03   Max.   :59.931   Max.   :11.2560
 ```
+
+## Where points fall
+
+[`cdt_locate()`](https://hypertidy.github.io/cdtr/reference/cdt_locate.md)
+finds the triangle holding each query point with exact orientation
+tests, so a point on a shared edge is never lost between triangles. With
+`barycentric = TRUE` it also gives the weights of the triangle’s
+vertices at each point.
+
+``` r
+
+cdt_locate(m$P, m$T, c(-80, -79), c(35.5, 35.5), barycentric = TRUE)
+#>   triangle        b1        b2         b3
+#> 1     1225 0.3858433 0.5537999 0.06035678
+#> 2      379 0.1891296 0.7195179 0.09135246
+```
+
+## Where input came from
+
+`edge_sources = TRUE` returns, for every fixed edge, the input segments
+that cover it (through crossings, splits and refinement). That lets
+regions be labelled by which inputs cover them, which `depth` cannot do,
+and
+[`cdt_winding()`](https://hypertidy.github.io/cdtr/reference/cdt_winding.md)
+uses it to give the winding number of each input feature in every
+triangle, for overlapping polygons, with no point-in-polygon test. See
+[`vignette("overlay")`](https://hypertidy.github.io/cdtr/articles/overlay.md).
 
 ## Working with polygons: wkpool and polymer
 
@@ -167,16 +214,48 @@ goes straight into
 as shown in
 [`vignette("wkpool", package = "cdtr")`](https://hypertidy.github.io/cdtr/articles/wkpool.md).
 The [polymer](https://github.com/hypertidy/polymer) package builds
-many-layer polygon overlay on both. See
-[`vignette("cdtr")`](https://hypertidy.github.io/cdtr/articles/cdtr.md)
-for a tour of the package.
+many-layer polygon overlay on both.
+
+## Vignettes
+
+- [`vignette("cdtr")`](https://hypertidy.github.io/cdtr/articles/cdtr.md):
+  a tour of the package.
+- [`vignette("wkpool")`](https://hypertidy.github.io/cdtr/articles/wkpool.md):
+  polygons, triangle pools and wkpool.
+- [`vignette("terrain")`](https://hypertidy.github.io/cdtr/articles/terrain.md):
+  a surface from contour lines, and how triangle quality relates to its
+  error.
+- [`vignette("overlay")`](https://hypertidy.github.io/cdtr/articles/overlay.md):
+  overlapping inputs, `edge_sources` and
+  [`cdt_winding()`](https://hypertidy.github.io/cdtr/reference/cdt_winding.md).
 
 ## What this is for
 
-`cdtr` is the triangulation primitive for the hypertidy mesh packages,
-where it replaces RTriangle (Shewchuk’s Triangle, non-commercial
-licence). The `inst/benchmarks/` scripts compare the two on anglr’s
-Tasmanian contour and cadastre data; the short version is that
-constrained-only output is identical, refinement honours `max_area`
-where Triangle may give up, and Triangle’s refiner is faster per Steiner
-point.
+`cdtr` is the builds-anywhere, permissively licensed baseline of the
+hypertidy meshing stack, and the triangulation behind its polygon
+overlay tools. It has value on its own: what it adds to a triangulation
+is information about how the mesh relates to its input, namely region
+depth, vertex origin, the input segments behind every constraint edge,
+and per-feature winding.
+
+It shares a vertices, segments and triangles contract with other
+backends, so which one to use is a choice and not a rewrite. RTriangle
+(Shewchuk’s Triangle) is the established one in R, and
+[`cdt_pslg()`](https://hypertidy.github.io/cdtr/reference/cdt_pslg.md)
+accepts its `pslg` input as it is.
+[laridae](https://github.com/hypertidy/laridae) provides CGAL’s
+constrained triangulations and meshing, as a persistent mesh that can be
+edited and refined. Having more than one option opens up more of what
+can be done with triangulation in R.
+
+The `inst/benchmarks/` scripts compare cdtr and RTriangle on North
+Carolina and anglr’s Tasmanian contour and cadastre data (they need
+anglr, which is no longer on CRAN). Constrained-only, the two give
+meshes of the same size, with the same largest area and smallest angle,
+on all three. With `max_area` both meet the target. cdtr adds more
+Steiner vertices (on the contours, about 14,500 against 5,800 vertices)
+and reports in `unrefined` where it declined to refine, and its smallest
+angles are better on the counties but equally poor on the contours.
+Triangle is faster, by a factor of about three to four in these runs, so
+it is the better choice if speed on a large problem matters more than
+the extra features.

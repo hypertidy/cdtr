@@ -5,7 +5,10 @@ Delaunay triangulation, Ruppert refinement by area or minimum angle
 (Ruppert (1995)
 [doi:10.1006/jagm.1995.1021](https://doi.org/10.1006/jagm.1995.1021) ),
 resolution of crossing constraints, and topological region depth per
-triangle. Aimed at replacing 'RTriangle' in 'anglr'.
+triangle. Also returns the provenance of each vertex and the input
+segments behind each constraint edge, so that the coverage of
+overlapping polygons and lines can be found from the mesh. The input and
+output follow the planar straight line graph form used by 'RTriangle'.
 
 ## See also
 
