@@ -120,6 +120,74 @@ the vertices lie on the lines. `cdt_quality()` reports it.
 summary(cdt_quality(m)[c("min_angle", "radius_edge")])
 ```
 
+## Does quality show in the surface?
+
+`cdt_quality()` describes the shape of each triangle. Whether it matters for the
+surface is a separate question, and the error at the held-out points can be
+related to the triangle each point falls in.
+
+```{r relate}
+tri <- cdt_locate(m$P, m$T, xq, yq)
+zz <- cdt_interpolate(m$P, m$T, m$PA, xq, yq)[, "z"]
+err <- zz - zq
+q <- cdt_quality(m)
+angle_class <- cut(q$min_angle, c(0, 10, 20, 30, 60),
+                   labels = c("<10", "10-20", "20-30", ">30"))
+size_class <- cut(q$area, quantile(q$area, 0:4 / 4), include.lowest = TRUE,
+                  labels = c("smallest", "2", "3", "largest"))
+at_points <- data.frame(err = err, angle = angle_class[tri], size = size_class[tri])
+at_points <- at_points[!is.na(tri), ]
+rmse <- function(e) sqrt(mean(e^2))
+by_angle <- tapply(at_points$err, at_points$angle, rmse)
+by_size <- tapply(at_points$err, at_points$size, rmse)
+round(rbind(share_of_points = table(at_points$angle) / nrow(at_points),
+            rmse = by_angle), 3)
+```
+
+The top left map shows the error, and the top right shows the same mesh with its
+triangles shaded by minimum angle. The bars summarise the error by shape and by
+size.
+
+```{r relate-plot, fig.width = 7, fig.height = 7}
+emat <- matrix(err, nr, nc)
+xs <- g$xmin + (seq_len(nc) - 0.5) * cell
+ys <- g$ymax - (seq_len(nr) - 0.5) * cell
+lim <- 30
+op <- par(mfrow = c(2, 2), mar = c(0.5, 0.5, 2, 0.5))
+image(xs, rev(ys), pmax(pmin(t(emat)[, nr:1], lim), -lim), asp = 1, axes = FALSE,
+      xlab = "", ylab = "", zlim = c(-lim, lim), col = hcl.colors(21, "Blue-Red 3"),
+      main = "error (m), mesh minus DEM")
+for (l in unique(contours$line)) {
+  i <- contours$line == l
+  lines(contours$x[i], contours$y[i], col = "#00000040", lwd = 0.5)
+}
+shade <- c("firebrick", "darkorange", "gold", "grey90")
+plot(m$P, type = "n", asp = 1, axes = FALSE, xlab = "", ylab = "",
+     main = "triangles by minimum angle")
+polygon(m$P[t(cbind(m$T, NA)), 1], m$P[t(cbind(m$T, NA)), 2],
+        col = shade[angle_class], border = NA)
+legend("topright", legend = levels(angle_class), fill = shade, title = "degrees",
+       cex = 0.7, bty = "n")
+par(mar = c(4, 4, 2, 1))
+barplot(by_angle, xlab = "minimum angle (degrees)", ylab = "RMSE (m)",
+        main = "error by triangle shape")
+barplot(by_size, xlab = "triangle area (quartile)", ylab = "RMSE (m)",
+        main = "error by triangle size")
+par(op)
+```
+
+The worst-shaped triangles (under 10 degrees) have about twice the error of the
+well-shaped ones, but they are a small share of the points, and most of the
+error map is somewhere else. The largest errors are on the summit plateau, in
+the largest triangles, where one triangle spans ground that rises and falls
+between contours. The error rises steadily through the size quartiles, from
+about `r round(by_size[1])` m to `r round(by_size[4])` m, where the effect of
+shape is mostly in the worst class. Thin triangles are where contours run close together, such as
+steep ravines, where the true surface is also changing quickly, so shape and
+error are related but one does not explain the other. Minimum angle is a good
+guide to whether a mesh will behave well, but a poor guide to how accurate the
+surface is.
+
 Adding Steiner vertices by refinement improves the shape of the triangles.
 Does it improve the surface? Refine to a maximum area and a minimum angle, and
 compare the same measures.

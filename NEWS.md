@@ -17,7 +17,8 @@ This development version collects what will be released as cdtr 0.2.0.
   around kunanyi (Mount Wellington) from contours with `cdt_triangulate_attr()`
   and checking it against the elevation model. The small data file in
   `inst/extdata` is from the Tasmania 2 m DEM, The LIST, (c) State of Tasmania,
-  CC BY 3.0 AU (see `inst/COPYRIGHTS`).
+  CC BY 3.0 AU (see `inst/COPYRIGHTS`). It relates the quality of the
+  triangles to the error and appearance of the surface, with a figure.
 
 * Two vignettes: "Getting started with cdtr" (depth, `erase`, refinement,
   crossings, `edge_sources`, locating and interpolating) and "Polygons,
