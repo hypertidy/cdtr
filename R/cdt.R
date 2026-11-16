@@ -24,6 +24,13 @@
 #'   Note that `"outer"` keeps the triangles inside holes (they have even
 #'   `depth`), so use `"holes"` when the triangles are to represent polygon
 #'   area, for example to build a triangle pool or sum areas.
+#' @param holes optional hole points, a two-column matrix or a list or data
+#'   frame with `x` and `y`. The region around each point that is bounded by
+#'   constraint segments is erased, as with the `H` of an `RTriangle::pslg()`.
+#'   This is in addition to `erase`. A point in no bounded region (outside every
+#'   ring, or with no segments) erases nothing, and a point exactly on a segment
+#'   is not supported. Holes are applied after the topological `depth` is
+#'   computed, so `depth` still describes the unerased mesh.
 #' @param intersect how crossing constraints are handled: "resolve" inserts the
 #'   crossing point, "error" fails, "ignore" skips the check
 #' @param angle_first when both criteria are given, refine by angle before area
@@ -71,6 +78,10 @@
 #' plot(r2$P, asp = 1, pch = ".")
 #' polygon(r2$P[t(cbind(r2$T, NA)), ], col = "grey90")
 #'
+#' ## erase the region around a point instead (like RTriangle's pslg H)
+#' r5 <- cdt_triangulate(x, y, s0, s1, holes = cbind(0.5, 0.5))
+#' table(r5$depth)
+#'
 #' ## which input segments make up each fixed edge
 #' r4 <- cdt_triangulate(x, y, s0, s1, max_area = 0.05, edge_sources = TRUE)
 #' head(r4$edge_sources)
@@ -87,7 +98,8 @@ cdt_triangulate <- function(x, y, s0 = NULL, s1 = NULL,
                             erase = c("outer", "hull", "holes"),
                             intersect = c("resolve", "error", "ignore"),
                             angle_first = FALSE, depth_distinct = FALSE,
-                            edge_sources = FALSE) {
+                            edge_sources = FALSE, holes = NULL) {
+  hxy <- hole_points_xy(holes)
   if (is.null(s0)) s0 <- integer(0)
   if (is.null(s1)) s1 <- integer(0)
   erase <- match.arg(erase)
@@ -107,7 +119,7 @@ cdt_triangulate <- function(x, y, s0 = NULL, s1 = NULL,
                              if (is.null(min_angle)) -1 else min_angle,
                              if (is.infinite(max_steiner)) -1L else as.integer(max_steiner),
                              min_edge_length, conforming, erase, intersect, angle_first,
-                             depth_distinct, edge_sources)
+                             depth_distinct, edge_sources, hxy$x, hxy$y)
   if (edge_sources) {
     es <- out$edge_sources
     out$edge_sources <- data.frame(edge = es$edge, segment = es$segment,
@@ -117,6 +129,22 @@ cdt_triangulate <- function(x, y, s0 = NULL, s1 = NULL,
   out$unrefined <- unrefined_frame(out$unrefined)
   out$origin <- vertex_origin(nrow(out$P), out$n_input, out$n_crossing, conforming)
   out
+}
+
+hole_points_xy <- function(holes) {
+  if (is.null(holes)) return(list(x = double(0), y = double(0)))
+  if (is.data.frame(holes) || (is.list(holes) && !is.null(holes$x))) {
+    xy <- list(x = holes$x, y = holes$y)
+  } else {
+    holes <- as.matrix(holes)
+    if (ncol(holes) != 2L) stop("`holes` must have two columns (x, y)", call. = FALSE)
+    xy <- list(x = holes[, 1], y = holes[, 2])
+  }
+  xy <- lapply(xy, as.double)
+  if (anyNA(unlist(xy)) || !all(is.finite(unlist(xy)))) {
+    stop("`holes` must be finite", call. = FALSE)
+  }
+  xy
 }
 
 ## Per-vertex provenance (meshspec `origin`): input vertices first, then
@@ -184,7 +212,8 @@ unrefined_frame <- function(u) {
 #' a two-column matrix of vertex coordinates, and `S`, a two-column matrix of
 #' 1-based segment vertex indices.
 #'
-#' @param p a pslg (list with P and S)
+#' @param p a pslg (list with P and S, and optionally H, a two-column matrix
+#'   of hole points, passed as `holes` unless `holes` is given in `...`)
 #' @param ... passed to [cdt_triangulate()]
 #' @return the list returned by [cdt_triangulate()]
 #' @export
@@ -196,7 +225,9 @@ unrefined_frame <- function(u) {
 #' plot(r$P, asp = 1, pch = ".")
 #' polygon(r$P[t(cbind(r$T, NA)), ])
 cdt_pslg <- function(p, ...) {
-  cdt_triangulate(p$P[, 1], p$P[, 2], p$S[, 1], p$S[, 2], ...)
+  args <- list(...)
+  if (!is.null(p$H) && length(p$H) > 0L && is.null(args$holes)) args$holes <- p$H
+  do.call(cdt_triangulate, c(list(p$P[, 1], p$P[, 2], p$S[, 1], p$S[, 2]), args))
 }
 
 #' Unique edges of a triangulation

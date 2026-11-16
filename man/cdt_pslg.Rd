@@ -7,7 +7,8 @@
 cdt_pslg(p, ...)
 }
 \arguments{
-\item{p}{a pslg (list with P and S)}
+\item{p}{a pslg (list with P and S, and optionally H, a two-column matrix
+of hole points, passed as \code{holes} unless \code{holes} is given in \code{...})}
 
 \item{...}{passed to \code{\link[=cdt_triangulate]{cdt_triangulate()}}}
 }

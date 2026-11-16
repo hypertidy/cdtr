@@ -2,6 +2,13 @@
 
 This development version collects what will be released as cdtr 0.2.0.
 
+* `cdt_triangulate(holes = )` takes hole points (a two-column matrix, or a
+  list or data frame with `x` and `y`) and erases the region around each that
+  is bounded by constraint segments, as the `H` of an `RTriangle::pslg()` does.
+  `cdt_pslg()` uses `p$H` when present. This makes a drop-in replacement for
+  Triangle's holes where polygons are given as rings of segments. A hole point
+  in no bounded region erases nothing.
+
 * Two vignettes: "Getting started with cdtr" (depth, `erase`, refinement,
   crossings, `edge_sources`, locating and interpolating) and "Polygons,
   triangle pools and wkpool".

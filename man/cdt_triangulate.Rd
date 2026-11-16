@@ -20,7 +20,8 @@ cdt_triangulate(
   intersect = c("resolve", "error", "ignore"),
   angle_first = FALSE,
   depth_distinct = FALSE,
-  edge_sources = FALSE
+  edge_sources = FALSE,
+  holes = NULL
 )
 }
 \arguments{
@@ -68,6 +69,14 @@ from outside a triangle crosses a shared, doubled boundary.}
 
 \item{edge_sources}{also return \code{edge_sources}, a data frame with one row
 per fixed edge and input segment covering it (see Value)}
+
+\item{holes}{optional hole points, a two-column matrix or a list or data
+frame with \code{x} and \code{y}. The region around each point that is bounded by
+constraint segments is erased, as with the \code{H} of an \code{RTriangle::pslg()}.
+This is in addition to \code{erase}. A point in no bounded region (outside every
+ring, or with no segments) erases nothing, and a point exactly on a segment
+is not supported. Holes are applied after the topological \code{depth} is
+computed, so \code{depth} still describes the unerased mesh.}
 }
 \value{
 list with P (vertices), T (1-based triangle indices, wound
@@ -110,6 +119,10 @@ r2 <- cdt_triangulate(x, y, s0, s1, erase = "holes",
 table(r2$origin)
 plot(r2$P, asp = 1, pch = ".")
 polygon(r2$P[t(cbind(r2$T, NA)), ], col = "grey90")
+
+## erase the region around a point instead (like RTriangle's pslg H)
+r5 <- cdt_triangulate(x, y, s0, s1, holes = cbind(0.5, 0.5))
+table(r5$depth)
 
 ## which input segments make up each fixed edge
 r4 <- cdt_triangulate(x, y, s0, s1, max_area = 0.05, edge_sources = TRUE)

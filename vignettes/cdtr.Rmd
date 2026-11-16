@@ -79,6 +79,15 @@ sapply(c("hull", "outer", "holes"), function(e) {
 })
 ```
 
+Holes can also be given as points, as in an `RTriangle::pslg()`'s `H`. The
+region around each point that is bounded by segments is erased, which is useful
+when you know a point inside a hole but not the depth.
+
+```{r holes}
+rh <- cdt_triangulate(x, y, s0, s1, holes = cbind(0.5, 0.5))
+table(rh$depth)
+```
+
 ## Refinement
 
 Ruppert refinement adds Steiner vertices to meet a maximum triangle area or a

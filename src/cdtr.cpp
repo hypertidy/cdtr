@@ -23,6 +23,52 @@ writable::integers unrefined_counts(const CDT::Unrefined& u) {
   return out;
 }
 
+// Triangles reachable from each hole point without crossing a fixed edge,
+// added to `erase`. Like Triangle's hole points: the region bounded by
+// segments around the point is eaten. A hole whose region reaches the
+// super-triangle is not bounded by segments, so it adds nothing.
+void add_hole_regions(const CDT::Triangulation<double>& cdt, doubles hx, doubles hy,
+                      CDT::TriIndUSet& erase) {
+  const std::size_t nt = cdt.triangles.size();
+  for (R_xlen_t h = 0; h < hx.size(); ++h) {
+    const double qx = hx[h], qy = hy[h];
+    std::size_t seed = nt;
+    for (std::size_t t = 0; t < nt && seed == nt; ++t) {
+      const CDT::Triangle& tr = cdt.triangles[t];
+      bool inside = true;
+      for (int k = 0; k < 3 && inside; ++k) {
+        const CDT::V2d<double>& a = cdt.vertices[tr.vertices[k]];
+        const CDT::V2d<double>& b = cdt.vertices[tr.vertices[(k + 1) % 3]];
+        if (predicates::orient2d(a.x, a.y, b.x, b.y, qx, qy) < 0) inside = false;
+      }
+      if (inside) seed = t;
+    }
+    if (seed == nt) continue;
+    CDT::TriIndUSet seen;
+    std::vector<CDT::TriInd> stack(1, static_cast<CDT::TriInd>(seed));
+    seen.insert(stack[0]);
+    bool unbounded = false;
+    while (!stack.empty() && !unbounded) {
+      const CDT::TriInd t = stack.back();
+      stack.pop_back();
+      const CDT::Triangle& tr = cdt.triangles[t];
+      for (int k = 0; k < 3; ++k) {
+        if (tr.vertices[k] < CDT::nSuperTriVerts) { unbounded = true; break; }
+      }
+      if (unbounded) break;
+      for (int k = 0; k < 3; ++k) {
+        const CDT::TriInd nb = tr.neighbors[k];
+        if (nb == CDT::noNeighbor || seen.count(nb)) continue;
+        const CDT::Edge e(tr.vertices[k], tr.vertices[(k + 1) % 3]);
+        if (cdt.fixedEdges.count(e)) continue;
+        seen.insert(nb);
+        stack.push_back(nb);
+      }
+    }
+    if (!unbounded) erase.insert(seen.begin(), seen.end());
+  }
+}
+
 } // namespace
 
 [[cpp11::register]]
@@ -31,7 +77,8 @@ list cdt_triangulate_cpp(doubles x, doubles y, integers s0, integers s1,
                          int max_steiner, double min_edge_length,
                          bool conforming, int erase_mode, int intersect_mode,
                          bool angle_first, bool want_depth_distinct,
-                         bool want_edge_sources) {
+                         bool want_edge_sources,
+                         doubles hole_x, doubles hole_y) {
   // erase_mode: 0 = convex hull, 1 = outer (RTriangle -p semantics), 2 = outer + holes
   // intersect_mode: 0 = NotAllowed, 1 = TryResolve, 2 = DontCheck
   const R_xlen_t n = x.size();
@@ -100,6 +147,7 @@ list cdt_triangulate_cpp(doubles x, doubles y, integers s0, integers s1,
   if (erase_mode == 1) to_erase = cdt.collectOuterTriangles();
   else if (erase_mode == 2) to_erase = cdt.collectOuterTrianglesAndHoles();
   else to_erase = cdt.collectSuperTriangle();
+  if (hole_x.size() > 0) add_hole_regions(cdt, hole_x, hole_y, to_erase);
 
   writable::list unrefined;
   if (max_area > 0 || min_angle_deg > 0) {
