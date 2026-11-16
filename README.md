@@ -215,9 +215,23 @@ many-layer polygon overlay on both.
 
 ## What this is for
 
-`cdtr` is the triangulation primitive for the hypertidy mesh packages,
-where it replaces RTriangle (Shewchuk’s Triangle, non-commercial
-licence). The `inst/benchmarks/` scripts compare the two on North
+`cdtr` is the builds-anywhere, permissively licensed baseline of the
+hypertidy meshing stack, and the triangulation behind its polygon
+overlay tools. It has value on its own: what it adds to a triangulation
+is information about how the mesh relates to its input, namely region
+depth, vertex origin, the input segments behind every constraint edge,
+and per-feature winding.
+
+It shares a vertices, segments and triangles contract with other
+backends, so which one to use is a choice and not a rewrite. RTriangle
+(Shewchuk’s Triangle) is the established one in R, and `cdt_pslg()`
+accepts its `pslg` input as it is.
+[laridae](https://github.com/hypertidy/laridae) provides CGAL’s
+constrained triangulations and meshing, as a persistent mesh that can be
+edited and refined. Having more than one option opens up more of what
+can be done with triangulation in R.
+
+The `inst/benchmarks/` scripts compare cdtr and RTriangle on North
 Carolina and anglr’s Tasmanian contour and cadastre data (they need
 anglr, which is no longer on CRAN). Constrained-only, the two give
 meshes of the same size, with the same largest area and smallest angle,
