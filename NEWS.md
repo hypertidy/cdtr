@@ -2,6 +2,10 @@
 
 This development version collects what will be released as cdtr 0.2.0.
 
+* New `cdt_quality()` returns per-triangle area, minimum and maximum angle,
+  shortest and longest edge, and radius-edge ratio, to check a mesh or that
+  refinement met its targets.
+
 * `cdt_triangulate(holes = )` takes hole points (a two-column matrix, or a
   list or data frame with `x` and `y`) and erases the region around each that
   is bounded by constraint segments, as the `H` of an `RTriangle::pslg()` does.

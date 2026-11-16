@@ -365,3 +365,61 @@ cdt_triangulate_attr <- function(x, y, s0 = NULL, s1 = NULL, PA = NULL, ...) {
   r$PA <- out
   r
 }
+
+#' Triangle quality measures
+#'
+#' Per-triangle area, angles, edge lengths and radius-edge ratio, for judging
+#' a mesh or checking that refinement met its targets.
+#'
+#' @param x a result of [cdt_triangulate()] (a list with `P` and `T`), or a
+#'   two-column matrix of vertex coordinates, in which case `T` is needed
+#' @param T triangle vertex indices (m x 3, 1-based), when `x` is a matrix
+#' @return a data frame with one row per triangle and columns `area` (always
+#'   non-negative), `min_angle` and `max_angle` (degrees), `min_edge` and
+#'   `max_edge`, and `radius_edge` (circumradius over shortest edge; the
+#'   Ruppert bound on it is about 1.41 for a 20.7 degree minimum angle, and
+#'   `Inf` for a degenerate triangle). Use [summary()] on the result for the
+#'   distributions.
+#' @export
+#' @examples
+#' ## an irregular polygon with a sharp corner, refined by area and angle
+#' x <- c(0, 2, 2, 1, 0)
+#' y <- c(0, 0, 2, 0.4, 2)
+#' r <- cdt_triangulate(x, y, 1:5, c(2:5, 1), max_area = 0.05, min_angle = 25)
+#' q <- cdt_quality(r)
+#' summary(q[c("area", "min_angle", "radius_edge")])
+#' ## both refinement targets were met
+#' c(max_area = max(q$area), min_angle = min(q$min_angle))
+cdt_quality <- function(x, T = NULL) {
+  if (is.list(x) && !is.null(x$P) && !is.null(x$T)) {
+    P <- x$P; T <- x$T
+  } else {
+    P <- x
+    if (is.null(T)) stop("`T` is needed when `x` is a matrix", call. = FALSE)
+  }
+  P <- as.matrix(P); T <- as.matrix(T)
+  stopifnot(ncol(P) == 2L, ncol(T) == 3L)
+  if (nrow(T) > 0L && (anyNA(T) || min(T) < 1L || max(T) > nrow(P))) {
+    stop("`T` must index rows of `P`", call. = FALSE)
+  }
+  ax <- P[T[, 1], 1]; ay <- P[T[, 1], 2]
+  bx <- P[T[, 2], 1]; by <- P[T[, 2], 2]
+  cx <- P[T[, 3], 1]; cy <- P[T[, 3], 2]
+  a <- sqrt((bx - cx)^2 + (by - cy)^2)  # opposite vertex 1
+  b <- sqrt((ax - cx)^2 + (ay - cy)^2)
+  c <- sqrt((ax - bx)^2 + (ay - by)^2)
+  area <- 0.5 * abs((bx - ax) * (cy - ay) - (cx - ax) * (by - ay))
+  ang <- function(opp, s1, s2) {
+    cs <- (s1^2 + s2^2 - opp^2) / (2 * s1 * s2)
+    acos(pmin(1, pmax(-1, cs))) * 180 / pi
+  }
+  angles <- cbind(ang(a, b, c), ang(b, a, c), ang(c, a, b))
+  min_edge <- pmin(a, b, c)
+  max_edge <- pmax(a, b, c)
+  circumradius <- a * b * c / (4 * area)
+  data.frame(area = area,
+             min_angle = suppressWarnings(apply(angles, 1, min)),
+             max_angle = suppressWarnings(apply(angles, 1, max)),
+             min_edge = min_edge, max_edge = max_edge,
+             radius_edge = circumradius / min_edge)
+}

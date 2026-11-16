@@ -1,0 +1,41 @@
+test_that("an equilateral triangle has 60 degree angles and radius-edge 1/sqrt(3)", {
+  P <- cbind(c(0, 1, 0.5), c(0, 0, sqrt(3) / 2))
+  q <- cdt_quality(P, rbind(1:3))
+  expect_equal(q$min_angle, 60)
+  expect_equal(q$max_angle, 60)
+  expect_equal(q$area, sqrt(3) / 4)
+  expect_equal(q$radius_edge, 1 / sqrt(3))
+  expect_equal(c(q$min_edge, q$max_edge), c(1, 1))
+})
+
+test_that("a right isoceles triangle has the expected measures, either winding", {
+  P <- cbind(c(0, 1, 0), c(0, 0, 1))
+  q1 <- cdt_quality(P, rbind(1:3))
+  q2 <- cdt_quality(P, rbind(c(1, 3, 2)))
+  expect_equal(q1, q2)
+  expect_equal(q1$area, 0.5)
+  expect_equal(q1$min_angle, 45)
+  expect_equal(q1$max_angle, 90)
+  expect_equal(q1$radius_edge, (sqrt(2) / 2) / 1)
+})
+
+test_that("a refined mesh meets its targets and a result list is accepted", {
+  x <- c(0, 1, 1, 0); y <- c(0, 0, 1, 1)
+  r <- cdt_triangulate(x, y, 1:4, c(2:4, 1), max_area = 0.02, min_angle = 25)
+  q <- cdt_quality(r)
+  expect_equal(nrow(q), nrow(r$T))
+  expect_lte(max(q$area), 0.02 + 1e-12)
+  expect_gte(min(q$min_angle), 25 - 1e-8)
+  expect_equal(sum(q$area), 1)
+  expect_equal(q, cdt_quality(r$P, r$T))
+})
+
+test_that("degenerate triangles and bad input are handled", {
+  P <- cbind(c(0, 1, 2), c(0, 0, 0))
+  q <- cdt_quality(P, rbind(1:3))
+  expect_equal(q$area, 0)
+  expect_equal(q$radius_edge, Inf)
+  expect_equal(nrow(cdt_quality(P, matrix(0L, 0, 3))), 0L)
+  expect_error(cdt_quality(P), "needed")
+  expect_error(cdt_quality(P, rbind(c(1, 2, 4))), "index")
+})
