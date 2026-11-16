@@ -89,6 +89,20 @@ edge; by default it is derived from the input (a fraction of the median
 segment length, capped by the area target) so refinement does not
 cascade into sharp input corners. Pass `0` for never-give-up.
 
+## Holes as points
+
+`erase = "holes"` drops the even depths. A hole can also be given as a
+point, as the `H` of an `RTriangle::pslg()`: the region around it that
+is bounded by segments is erased, whatever its depth.
+
+``` r
+rh <- cdt_triangulate(x, y, s0, s1, holes = cbind(0.5, 0.5))
+table(rh$depth)
+#> 
+#> 1 
+#> 8
+```
+
 ## Real polygons
 
 Any polygon source reduces to the same two tables. With `sf`’s North
@@ -140,18 +154,44 @@ range(ma$PA[, "z"] - (2 * ma$P[, 1] + 3 * ma$P[, 2]))
 #> [1] -1.421085e-14  1.421085e-14
 ```
 
-## Where input came from, and where points fall
+## Mesh quality
 
-`edge_sources = TRUE` returns, for every fixed edge, the input segments
-that cover it (through crossings, splits and refinement), so regions can
-be labelled by which inputs cover them. `cdt_locate()` finds the
-triangle holding each query point with exact orientation tests, so a
-point on a shared edge is never lost between triangles.
+`cdt_quality()` gives the shape of every triangle: area, angles, edge
+lengths and radius-edge ratio.
 
 ``` r
-cdt_locate(m$P, m$T, c(-80, -79), c(35.5, 35.5))
-#> [1] 1225  379
+summary(cdt_quality(m)[c("area", "min_angle", "radius_edge")])
+#>       area             min_angle       radius_edge     
+#>  Min.   :6.430e-06   Min.   : 2.546   Min.   : 0.5778  
+#>  1st Qu.:8.159e-04   1st Qu.:21.217   1st Qu.: 0.7234  
+#>  Median :2.977e-03   Median :33.813   Median : 0.8985  
+#>  Mean   :3.376e-03   Mean   :32.666   Mean   : 1.2297  
+#>  3rd Qu.:5.462e-03   3rd Qu.:43.721   3rd Qu.: 1.3816  
+#>  Max.   :9.997e-03   Max.   :59.931   Max.   :11.2560
 ```
+
+## Where points fall
+
+`cdt_locate()` finds the triangle holding each query point with exact
+orientation tests, so a point on a shared edge is never lost between
+triangles. With `barycentric = TRUE` it also gives the weights of the
+triangle’s vertices at each point.
+
+``` r
+cdt_locate(m$P, m$T, c(-80, -79), c(35.5, 35.5), barycentric = TRUE)
+#>   triangle        b1        b2         b3
+#> 1     1225 0.3858433 0.5537999 0.06035678
+#> 2      379 0.1891296 0.7195179 0.09135246
+```
+
+## Where input came from
+
+`edge_sources = TRUE` returns, for every fixed edge, the input segments
+that cover it (through crossings, splits and refinement). That lets
+regions be labelled by which inputs cover them, which `depth` cannot do,
+and `cdt_winding()` uses it to give the winding number of each input
+feature in every triangle, for overlapping polygons, with no
+point-in-polygon test. See `vignette("overlay")`.
 
 ## Working with polygons: wkpool and polymer
 
@@ -162,8 +202,16 @@ and `tri_overlay_relate()`. The output of `cdt_pslg()` goes straight
 into `wkpool::new_wkpool_tri()`, as shown in
 `vignette("wkpool", package = "cdtr")`. The
 [polymer](https://github.com/hypertidy/polymer) package builds
-many-layer polygon overlay on both. See `vignette("cdtr")` for a tour of
-the package.
+many-layer polygon overlay on both.
+
+## Vignettes
+
+- `vignette("cdtr")`: a tour of the package.
+- `vignette("wkpool")`: polygons, triangle pools and wkpool.
+- `vignette("terrain")`: a surface from contour lines, and how triangle
+  quality relates to its error.
+- `vignette("overlay")`: overlapping inputs, `edge_sources` and
+  `cdt_winding()`.
 
 ## What this is for
 

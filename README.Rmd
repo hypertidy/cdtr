@@ -76,6 +76,17 @@ by default it is derived from the input (a fraction of the median segment
 length, capped by the area target) so refinement does not cascade into sharp
 input corners. Pass `0` for never-give-up.
 
+## Holes as points
+
+`erase = "holes"` drops the even depths. A hole can also be given as a point,
+as the `H` of an `RTriangle::pslg()`: the region around it that is bounded by
+segments is erased, whatever its depth.
+
+```{r holes}
+rh <- cdt_triangulate(x, y, s0, s1, holes = cbind(0.5, 0.5))
+table(rh$depth)
+```
+
 ## Real polygons
 
 Any polygon source reduces to the same two tables. With `sf`'s North Carolina
@@ -118,17 +129,34 @@ ma <- cdt_triangulate_attr(xy[, 1], xy[, 2], s0, s1, PA = cbind(z = z), max_area
 range(ma$PA[, "z"] - (2 * ma$P[, 1] + 3 * ma$P[, 2]))
 ```
 
-## Where input came from, and where points fall
+## Mesh quality
 
-`edge_sources = TRUE` returns, for every fixed edge, the input segments that
-cover it (through crossings, splits and refinement), so regions can be
-labelled by which inputs cover them. `cdt_locate()` finds the triangle holding
-each query point with exact orientation tests, so a point on a shared edge is
-never lost between triangles.
+`cdt_quality()` gives the shape of every triangle: area, angles, edge lengths
+and radius-edge ratio.
+
+```{r quality}
+summary(cdt_quality(m)[c("area", "min_angle", "radius_edge")])
+```
+
+## Where points fall
+
+`cdt_locate()` finds the triangle holding each query point with exact
+orientation tests, so a point on a shared edge is never lost between triangles.
+With `barycentric = TRUE` it also gives the weights of the triangle's vertices
+at each point.
 
 ```{r locate}
-cdt_locate(m$P, m$T, c(-80, -79), c(35.5, 35.5))
+cdt_locate(m$P, m$T, c(-80, -79), c(35.5, 35.5), barycentric = TRUE)
 ```
+
+## Where input came from
+
+`edge_sources = TRUE` returns, for every fixed edge, the input segments that
+cover it (through crossings, splits and refinement). That lets regions be
+labelled by which inputs cover them, which `depth` cannot do, and
+`cdt_winding()` uses it to give the winding number of each input feature in every
+triangle, for overlapping polygons, with no point-in-polygon test. See
+`vignette("overlay")`.
 
 ## Working with polygons: wkpool and polymer
 
@@ -139,7 +167,15 @@ cdtr for the constrained triangulation behind `tri_overlay()` and
 `wkpool::new_wkpool_tri()`, as shown in
 `vignette("wkpool", package = "cdtr")`. The
 [polymer](https://github.com/hypertidy/polymer) package builds many-layer
-polygon overlay on both. See `vignette("cdtr")` for a tour of the package.
+polygon overlay on both.
+
+## Vignettes
+
+- `vignette("cdtr")`: a tour of the package.
+- `vignette("wkpool")`: polygons, triangle pools and wkpool.
+- `vignette("terrain")`: a surface from contour lines, and how triangle quality
+  relates to its error.
+- `vignette("overlay")`: overlapping inputs, `edge_sources` and `cdt_winding()`.
 
 ## What this is for
 
