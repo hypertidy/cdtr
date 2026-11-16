@@ -40,7 +40,8 @@ shorter than this. NULL (the default) chooses a value from the input and
 the targets (see \code{\link[=default_min_edge_length]{default_min_edge_length()}}): a fraction of the median
 constraint segment length, capped so that it never blocks the \code{max_area}
 target. This stops the refiner cascading into sharp input corners. Use 0
-to never give up.}
+to never give up. A larger value gives a coarser mesh, since it also stops
+the splitting of encroached constraint segments (see Details).}
 
 \item{min_edge_frac}{fraction of the median constraint segment length used
 when \code{min_edge_length} is NULL}
@@ -101,6 +102,24 @@ has k rows. Zero-length input segments have no rows.
 \description{
 Thin binding to the artem-ogre/CDT library. Input mirrors RTriangle::pslg:
 vertices as x/y and constraint segments as index pairs into the vertices.
+}
+\details{
+Refinement follows Ruppert's algorithm, which protects the constraint
+segments: a segment is split whenever a vertex lies inside the circle on its
+diameter (it is "encroached"), and this applies to refinement by \code{max_area}
+alone as well as by \code{min_angle}. A mesh refined by \code{max_area} therefore has
+more vertices along the constraints, and better-shaped triangles, than one
+from a refiner that only splits large triangles, such as Triangle with \code{a}
+but no \code{q}. With input that has many close or crossing segments, such as
+contour lines, the difference can be a factor of two or more in the number of
+vertices.
+
+\code{min_edge_length} is the control for this: edges shorter than it are not
+split. Raising it gives fewer vertices. A floor of about half of
+\code{sqrt(max_area)} is a reasonable first try, and a floor near \code{sqrt(max_area)}
+may leave a few triangles over the target. The \code{unrefined} component of the
+result counts what was left undone, so check it and the largest area after
+raising the floor.
 }
 \examples{
 ## unit square with a square hole: two closed rings of 4 vertices
