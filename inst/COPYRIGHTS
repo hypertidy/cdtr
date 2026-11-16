@@ -22,3 +22,9 @@ It bundles the following third-party source code under src/CDT/:
 2. Robust geometric predicates (predicates.h).
    Copyright (c) 2019 William C. Lenthe
    Licensed under a 3-clause BSD license (full text in the file header).
+
+3. Example data (inst/extdata/tas_wellington.rds).
+   Contours and a 40 m grid of elevations derived from the Tasmania 2 metre
+   Digital Elevation Model, produced by Mineral Resources Tasmania. The LIST
+   (c) State of Tasmania, available under a Creative Commons Attribution 3.0
+   Australia licence. The derivation is in data-raw/tas_wellington.R.

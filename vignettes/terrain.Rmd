@@ -1,0 +1,169 @@
+---
+title: "A terrain surface from contour lines"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{A terrain surface from contour lines}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6,
+                      fig.height = 4.5, dpi = 100)
+```
+
+A classic use of constrained triangulation is to rebuild a surface from
+contour lines. The contours are constraints, each vertex carries its height,
+and the triangulation fills in between. This vignette does that for a 6 km
+square around kunanyi (Mount Wellington) in Tasmania, then checks the surface
+against the elevation model that the contours came from.
+
+```{r setup}
+library(cdtr)
+```
+
+## The data
+
+The contours (every 50 m, simplified to 5 m) and a 40 m grid of the source
+elevations are in a small file shipped with the package. The source is the
+Tasmania 2 m digital elevation model, The LIST, (c) State of Tasmania, under a
+Creative Commons Attribution 3.0 Australia licence. The script that made the
+file is in the package source as `data-raw/tas_wellington.R`.
+
+```{r data}
+d <- readRDS(system.file("extdata", "tas_wellington.rds", package = "cdtr"))
+contours <- d$contours
+head(contours)
+length(unique(contours$line))
+```
+
+Each row is a vertex of a contour line (`line` identifies the line) with
+its height `z`. Coordinates are metres in GDA94 / MGA zone 55.
+
+## Contours as a PSLG
+
+The segments join each vertex to the next one on the same line.
+
+```{r pslg}
+n <- nrow(contours)
+same_line <- contours$line[-n] == contours$line[-1]
+s0 <- which(same_line)
+s1 <- s0 + 1L
+c(vertices = n, segments = length(s0))
+```
+
+The contours are only constraints; there is no boundary ring, so the mesh
+covers the convex hull of the contour vertices (`erase = "hull"`). Where an
+input has no boundary there is nothing for `"outer"` to erase against.
+
+`cdt_triangulate_attr()` carries `z` along and gives any new vertex a height
+interpolated from the constrained triangulation of the input.
+
+```{r mesh}
+m <- cdt_triangulate_attr(contours$x, contours$y, s0, s1,
+                          PA = cbind(z = contours$z), erase = "hull")
+c(vertices = nrow(m$P), triangles = nrow(m$T), crossings = m$n_crossing)
+```
+
+```{r plot-mesh}
+plot_surface <- function(m, main = "") {
+  zt <- rowMeans(matrix(m$PA[t(m$T), "z"], ncol = 3, byrow = TRUE))
+  pal <- hcl.colors(100, "Terrain 2")
+  col <- pal[cut(zt, 100, labels = FALSE)]
+  plot(m$P, type = "n", asp = 1, axes = FALSE, xlab = "", ylab = "", main = main)
+  polygon(m$P[t(cbind(m$T, NA)), 1], m$P[t(cbind(m$T, NA)), 2],
+          col = col, border = NA)
+}
+op <- par(mar = c(0, 0, 1.5, 0))
+plot_surface(m, "triangles shaded by mean height")
+par(op)
+```
+
+## How good is the surface?
+
+The source elevations are at 40 m cell centres. Interpolating the mesh to those
+points with `cdt_interpolate()` gives a check that does not depend on
+how the contours were drawn. `cdt_locate()` says which points fall outside
+the hull of the contours, where there is no surface to compare.
+
+```{r grid}
+g <- d$grid
+nr <- nrow(g$z); nc <- ncol(g$z)
+cell <- 40
+xq <- rep(g$xmin + (seq_len(nc) - 0.5) * cell, each = nr)
+yq <- rep(g$ymax - (seq_len(nr) - 0.5) * cell, times = nc)
+zq <- as.vector(g$z)
+
+inside <- !is.na(cdt_locate(m$P, m$T, xq, yq))
+mean(inside)
+
+surface_error <- function(m) {
+  zz <- cdt_interpolate(m$P, m$T, m$PA, xq[inside], yq[inside])[, "z"]
+  err <- zz - zq[inside]
+  c(rmse = sqrt(mean(err^2)), mean_error = mean(err), max_abs = max(abs(err)))
+}
+round(surface_error(m), 2)
+```
+
+The root mean square error is about 7 m, with contours 50 m apart, and the
+average error is close to zero. The largest errors, tens of metres, are where
+the ground changes height between widely spaced lines: a linear mesh cannot
+put a peak above its highest contour or a hollow below its lowest, since it has
+no vertices there.
+
+## Quality
+
+Triangles built only from contour vertices can be long and thin, since all
+the vertices lie on the lines. `cdt_quality()` reports it.
+
+```{r quality}
+summary(cdt_quality(m)[c("min_angle", "radius_edge")])
+```
+
+Adding Steiner vertices by refinement improves the shape of the triangles.
+Does it improve the surface? Refine to a maximum area and a minimum angle, and
+compare the same measures.
+
+```{r refine}
+mr <- cdt_triangulate_attr(contours$x, contours$y, s0, s1,
+                           PA = cbind(z = contours$z), erase = "hull",
+                           max_area = 2000, min_angle = 25)
+qa <- cdt_quality(m)
+qb <- cdt_quality(mr)
+rbind(
+  contours_only = c(triangles = nrow(m$T), median_min_angle = median(qa$min_angle),
+                    share_below_20 = mean(qa$min_angle < 20), surface_error(m)["rmse"]),
+  refined = c(triangles = nrow(mr$T), median_min_angle = median(qb$min_angle),
+              share_below_20 = mean(qb$min_angle < 20), surface_error(mr)["rmse"])
+) |> round(3)
+```
+
+Refinement makes the triangles much better shaped (far fewer with a minimum
+angle below 20 degrees), at the cost of five times as many triangles, but the
+surface error is essentially unchanged. The new vertices only carry heights that
+the contours already imply. The extra triangles are for anything that
+needs well-shaped elements, such as rendering or a finite element model, and
+not for accuracy. For a better surface there must be more information, such as
+spot heights along ridges and streams, which can be added as vertices with their
+own `z`.
+
+```{r plot-refined}
+op <- par(mar = c(0, 0, 1.5, 0))
+plot_surface(mr, "refined: area and minimum angle")
+par(op)
+```
+
+The `unrefined` component of the result says where refinement could not meet
+its targets, and a few triangles remain well below the 25 degree target.
+
+```{r unrefined}
+mr$unrefined[, c("criterion", "circumcenterOutside", "shortEdgeTriangles",
+                 "sharpFixedCorner")]
+qr <- cdt_quality(mr)
+sum(qr$min_angle < 5)
+```
+
+Those few triangles are mostly right at the edge of the mesh. The convex hull is
+not itself a constraint here, so its edge is not something the refiner can split
+to improve the triangles beside it. If a clean outer edge matters, add a
+bounding polygon to the constraints.
