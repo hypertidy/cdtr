@@ -1,8 +1,8 @@
 source(system.file("benchmarks", "helpers.R", package = "cdtr"))
 report <- function(nm, p, max_area = NULL) {
-  rt <- tryCatch(if (is.null(max_area)) triangulate(p) else triangulate(p, a = max_area),
+  rt <- tryCatch(if (is.null(max_area)) rt_tri(p) else rt_tri(p, a = max_area),
                  error = function(e) e)
-  cd <- tryCatch(cdt_pslg(p, max_area = max_area), error = function(e) e)
+  cd <- tryCatch(cd_tri(p, max_area = max_area), error = function(e) e)
   for (lab in c("RTriangle", "cdtr")) {
     r <- if (lab == "RTriangle") rt else cd
     if (inherits(r, "error")) { cat(sprintf("  %-9s ERROR %s\n", lab, conditionMessage(r))); next }
@@ -24,11 +24,11 @@ for (nm in names(cases)) {
 
 cat("\n== timing (nc, max_area) ==\n")
 p <- cases$nc; A <- prod(diff(apply(p$P, 2, range)))
-print(bench::mark(RTriangle = triangulate(p, a = A / 5000),
-                  cdtr = cdt_pslg(p, max_area = A / 5000), check = FALSE, iterations = 10)[, c("expression", "median", "mem_alloc")])
+print(bench::mark(RTriangle = rt_tri(p, a = A / 5000),
+                  cdtr = cd_tri(p, max_area = A / 5000), check = FALSE, iterations = 10)[, c("expression", "median", "mem_alloc")])
 cat("\n== timing (cad_tas, constrained only) ==\n")
 p <- cases$cad_tas
-print(bench::mark(RTriangle = triangulate(p), cdtr = cdt_pslg(p), check = FALSE, iterations = 5)[, c("expression", "median", "mem_alloc")])
+print(bench::mark(RTriangle = rt_tri(p), cdtr = cd_tri(p), check = FALSE, iterations = 5)[, c("expression", "median", "mem_alloc")])
 
 ## crossing constraints: RTriangle inserts a crossing vertex; what does cdtr do?
 cat("\n== crossing segments ==\n")
