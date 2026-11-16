@@ -4,7 +4,7 @@
 \alias{cdt_locate}
 \title{Locate points in a triangle mesh}
 \usage{
-cdt_locate(P, T, xq, yq)
+cdt_locate(P, T, xq, yq, barycentric = FALSE)
 }
 \arguments{
 \item{P}{vertex coordinates (n x 2)}
@@ -12,10 +12,15 @@ cdt_locate(P, T, xq, yq)
 \item{T}{triangle vertex indices (m x 3, 1-based)}
 
 \item{xq, yq}{query coordinates}
+
+\item{barycentric}{if \code{TRUE}, return a data frame with the barycentric
+coordinates, rather than only the triangle index}
 }
 \value{
-an integer vector, \code{length(xq)}, of 1-based row indices into \code{T}
-(\code{NA} outside the mesh)
+by default an integer vector, \code{length(xq)}, of 1-based row indices
+into \code{T} (\code{NA} outside the mesh). With \code{barycentric = TRUE}, a data frame
+with one row per query point and columns \code{triangle} (the same index),
+and \code{b1}, \code{b2}, \code{b3}, which are \code{NA} where \code{triangle} is.
 }
 \description{
 Find the triangle that contains each query point. This is the point
@@ -29,10 +34,27 @@ A point on an edge or vertex shared by several triangles is given to the
 lowest triangle index that contains it. Points outside every triangle, and
 \code{NA} points, give \code{NA}. Triangles may be in either orientation, and
 degenerate (zero area) triangles contain no point.
+
+With \code{barycentric = TRUE} the barycentric coordinates of each point in its
+triangle are returned as well. They are the weights of the triangle's three
+vertices (in the order given in \code{T}) that reproduce the point, so
+\code{b1 * P[T[i, 1], ] + b2 * P[T[i, 2], ] + b3 * P[T[i, 3], ]} is the point,
+and any per-vertex value is interpolated by the same weights, as
+\code{\link[=cdt_interpolate]{cdt_interpolate()}} does. The weights are not negative and sum to 1; they are
+computed in double precision, with rounding error clamped, so a point on an
+edge has a weight of exactly 0 for the opposite vertex.
 }
 \examples{
 P <- cbind(c(0, 1, 1, 0), c(0, 0, 1, 1))
 T <- rbind(c(1, 2, 3), c(1, 3, 4))
 ## (0.5, 0.5) is on the shared diagonal: the lower triangle id wins
 cdt_locate(P, T, xq = c(0.75, 0.25, 0.5, 2), yq = c(0.25, 0.75, 0.5, 2))
+
+## the weights of each triangle's vertices
+loc <- cdt_locate(P, T, xq = c(0.75, 0.25, 0.5), yq = c(0.25, 0.75, 0.5),
+                  barycentric = TRUE)
+loc
+## a value known at the vertices, interpolated with those weights
+z <- c(0, 10, 20, 10)
+rowSums(as.matrix(loc[c("b1", "b2", "b3")]) * matrix(z[T[loc$triangle, ]], ncol = 3))
 }

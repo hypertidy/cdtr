@@ -2,6 +2,10 @@
 
 This development version collects what will be released as cdtr 0.2.0.
 
+* `cdt_locate(barycentric = TRUE)` also returns the barycentric coordinates of
+  each point in its triangle (`b1`, `b2`, `b3`, in the order of `T`), the
+  weights that interpolate any per-vertex value.
+
 * New `cdt_winding()` finds the winding number of each input feature in every
   triangle by walking the mesh and using `edge_sources`, with no
   point-in-polygon step. It is the coverage of each triangle by overlapping

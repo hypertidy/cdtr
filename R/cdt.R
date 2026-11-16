@@ -293,23 +293,64 @@ cdt_interpolate <- function(P, T, A, xq, yq) {
 #' `NA` points, give `NA`. Triangles may be in either orientation, and
 #' degenerate (zero area) triangles contain no point.
 #'
+#' With `barycentric = TRUE` the barycentric coordinates of each point in its
+#' triangle are returned as well. They are the weights of the triangle's three
+#' vertices (in the order given in `T`) that reproduce the point, so
+#' `b1 * P[T[i, 1], ] + b2 * P[T[i, 2], ] + b3 * P[T[i, 3], ]` is the point,
+#' and any per-vertex value is interpolated by the same weights, as
+#' [cdt_interpolate()] does. The weights are not negative and sum to 1; they are
+#' computed in double precision, with rounding error clamped, so a point on an
+#' edge has a weight of exactly 0 for the opposite vertex.
+#'
 #' @inheritParams cdt_interpolate
-#' @return an integer vector, `length(xq)`, of 1-based row indices into `T`
-#'   (`NA` outside the mesh)
+#' @param barycentric if `TRUE`, return a data frame with the barycentric
+#'   coordinates, rather than only the triangle index
+#' @return by default an integer vector, `length(xq)`, of 1-based row indices
+#'   into `T` (`NA` outside the mesh). With `barycentric = TRUE`, a data frame
+#'   with one row per query point and columns `triangle` (the same index),
+#'   and `b1`, `b2`, `b3`, which are `NA` where `triangle` is.
 #' @export
 #' @examples
 #' P <- cbind(c(0, 1, 1, 0), c(0, 0, 1, 1))
 #' T <- rbind(c(1, 2, 3), c(1, 3, 4))
 #' ## (0.5, 0.5) is on the shared diagonal: the lower triangle id wins
 #' cdt_locate(P, T, xq = c(0.75, 0.25, 0.5, 2), yq = c(0.25, 0.75, 0.5, 2))
-cdt_locate <- function(P, T, xq, yq) {
+#'
+#' ## the weights of each triangle's vertices
+#' loc <- cdt_locate(P, T, xq = c(0.75, 0.25, 0.5), yq = c(0.25, 0.75, 0.5),
+#'                   barycentric = TRUE)
+#' loc
+#' ## a value known at the vertices, interpolated with those weights
+#' z <- c(0, 10, 20, 10)
+#' rowSums(as.matrix(loc[c("b1", "b2", "b3")]) * matrix(z[T[loc$triangle, ]], ncol = 3))
+cdt_locate <- function(P, T, xq, yq, barycentric = FALSE) {
   P <- as.matrix(P); storage.mode(P) <- "double"
   T <- as.matrix(T); storage.mode(T) <- "integer"
   stopifnot(ncol(P) == 2L, ncol(T) == 3L, length(xq) == length(yq))
   if (nrow(T) > 0L && (anyNA(T) || min(T) < 1L || max(T) > nrow(P))) {
     stop("`T` must index rows of `P`", call. = FALSE)
   }
-  cdt_locate_cpp(P, T, as.double(xq), as.double(yq))
+  xq <- as.double(xq); yq <- as.double(yq)
+  tri <- cdt_locate_cpp(P, T, xq, yq)
+  if (!barycentric) return(tri)
+  na <- rep(NA_real_, length(tri))
+  out <- data.frame(triangle = tri, b1 = na, b2 = na, b3 = na)
+  i <- which(!is.na(tri))
+  if (length(i) > 0L) {
+    a <- P[T[tri[i], 1L], , drop = FALSE]
+    b <- P[T[tri[i], 2L], , drop = FALSE]
+    c <- P[T[tri[i], 3L], , drop = FALSE]
+    cross <- function(p, q, r) (q[, 1] - p[, 1]) * (r[, 2] - p[, 2]) -
+      (q[, 2] - p[, 2]) * (r[, 1] - p[, 1])
+    pt <- cbind(xq[i], yq[i])
+    total <- cross(a, b, c)
+    w <- cbind(cross(pt, b, c), cross(a, pt, c), cross(a, b, pt)) / total
+    ## located by exact tests, so any negative weight is rounding
+    w[w < 0] <- 0
+    w <- w / rowSums(w)
+    out$b1[i] <- w[, 1]; out$b2[i] <- w[, 2]; out$b3[i] <- w[, 3]
+  }
+  out
 }
 
 #' Triangulate with per-vertex attributes carried onto new vertices
