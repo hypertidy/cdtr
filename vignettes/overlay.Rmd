@@ -102,60 +102,12 @@ that covers it by plus or minus one, according to which way the input
 runs. Starting from a triangle in the frame, where every winding number is 0,
 the walk gives every triangle's winding number for each feature.
 
-The function below does this, using only the mesh and `edge_sources`. It takes
-the feature of each input segment, and a point known to be outside everything.
+`cdt_winding()` does this, using only the mesh and `edge_sources`. It takes the
+feature of each input segment (zero for the frame, which is not counted), and a
+point known to be outside everything.
 
 ```{r walk}
-mesh_winding <- function(r, owner, outside, n_features = max(owner)) {
-  P <- r$P; T <- r$T; S <- r$S; es <- r$edge_sources
-  nt <- nrow(T)
-  key <- function(a, b) paste(pmin(a, b), pmax(a, b))
-
-  ## winding change for each feature on crossing an S row from right to left
-  delta <- matrix(0L, nrow(S), n_features)
-  for (i in seq_len(nrow(es))) {
-    f <- owner[es$segment[i]]
-    if (f > 0) delta[es$edge[i], f] <- delta[es$edge[i], f] + if (es$forward[i]) 1L else -1L
-  }
-
-  ## every triangle edge, with its triangle and the opposite vertex
-  e <- rbind(cbind(T[, 1], T[, 2], seq_len(nt), T[, 3]),
-             cbind(T[, 2], T[, 3], seq_len(nt), T[, 1]),
-             cbind(T[, 3], T[, 1], seq_len(nt), T[, 2]))
-  k <- key(e[, 1], e[, 2])
-  s_row <- match(k, key(S[, 1], S[, 2]))
-  pairs <- split(seq_len(nrow(e)), k)
-  nb <- vector("list", nt)
-  for (p in pairs[lengths(pairs) == 2L]) {
-    nb[[e[p[1], 3]]] <- c(nb[[e[p[1], 3]]], p[2])
-    nb[[e[p[2], 3]]] <- c(nb[[e[p[2], 3]]], p[1])
-  }
-
-  w <- matrix(NA_integer_, nt, n_features)
-  start <- cdt_locate(P, T, outside[1], outside[2])
-  w[start, ] <- 0L
-  queue <- start
-  while (length(queue)) {
-    t <- queue[1]; queue <- queue[-1]
-    for (j in nb[[t]]) {
-      u <- e[j, 3]
-      if (!anyNA(w[u, ])) next
-      sr <- s_row[j]
-      if (is.na(sr)) {
-        w[u, ] <- w[t, ]
-      } else {
-        a <- S[sr, 1]; b <- S[sr, 2]; c <- e[j, 4]
-        left <- (P[b, 1] - P[a, 1]) * (P[c, 2] - P[a, 2]) -
-          (P[b, 2] - P[a, 2]) * (P[c, 1] - P[a, 1])
-        w[u, ] <- w[t, ] + sign(left) * delta[sr, ]
-      }
-      queue <- c(queue, u)
-    }
-  }
-  w
-}
-
-w <- mesh_winding(r, owner, outside = c(-0.9, -0.9))
+w <- cdt_winding(r, owner, outside = c(-0.9, -0.9))
 anyNA(w)
 head(w)
 ```
@@ -244,7 +196,8 @@ par(op)
 
 ## Notes
 
-The walk here does not depend on the mesh being refined, so it works with
-`max_area` and `min_angle` too, since `edge_sources` follows each input through
-splits by refinement. The polymer package does this at scale for polygon layers
+The walk does not depend on the mesh being refined, so it works with `max_area`
+and `min_angle` too, since `edge_sources` follows each input through splits by
+refinement. The tests check this against point-in-polygon with refinement and
+conforming mode, and the areas covered do not change. The polymer package does this at scale for polygon layers
 from any source, and uses wkpool for the shared vertices.

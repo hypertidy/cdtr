@@ -423,3 +423,121 @@ cdt_quality <- function(x, T = NULL) {
              min_edge = min_edge, max_edge = max_edge,
              radius_edge = circumradius / min_edge)
 }
+
+#' Winding number of each input feature in every triangle
+#'
+#' For a triangulation of several overlapping inputs, find which inputs cover
+#' each triangle. Triangles are walked from a starting point known to be
+#' covered by nothing. Stepping across an ordinary edge changes nothing;
+#' stepping across a fixed edge changes the winding number of each feature
+#' covering it by plus or minus one, according to the direction of its input
+#' segment (see `edge_sources` in [cdt_triangulate()]). Only the mesh is used,
+#' with no point-in-polygon test.
+#'
+#' Outer rings should run counter-clockwise and holes clockwise, which makes
+#' the winding number 1 inside the feature (a clockwise outer ring gives -1).
+#' Overlapping and shared edges are handled, and refinement does not matter, as
+#' `edge_sources` follows each input through splits.
+#'
+#' The mesh needs a region covered by nothing to start from, for example a
+#' frame around the inputs (give it feature 0, or a feature that you ignore),
+#' and the walk must be able to reach every triangle. Use `erase = "hull"`, or
+#' the default `"outer"` with a frame. With `erase = "holes"` the triangles are
+#' not connected through the erased regions, so some are not reached.
+#'
+#' @param x a result of [cdt_triangulate()] made with `edge_sources = TRUE`
+#' @param owner the feature of each input segment, an integer vector with one
+#'   element for each segment passed as `s0`, `s1`. Zero means the segment
+#'   is not counted, for a frame or any other construction line. Features are
+#'   `1` to `n_features`.
+#' @param outside a point `c(x, y)` in the mesh, covered by no feature
+#' @param n_features the number of features, by default the largest in `owner`
+#' @return an integer matrix with one row per triangle (the rows of `x$T`) and
+#'   one column per feature, giving its winding number there. Triangles the walk
+#'   cannot reach are `NA`, with a warning.
+#' @export
+#' @examples
+#' ## two overlapping squares, in a frame (feature 0)
+#' sq <- function(x0, y0, x1, y1) rbind(c(x0, y0), c(x1, y0), c(x1, y1), c(x0, y1))
+#' rings <- list(sq(0, 0, 2, 2), sq(1, 1, 3, 3), sq(-1, -1, 4, 4))
+#' feature <- c(1, 2, 0)
+#' n <- vapply(rings, nrow, 1L)
+#' first <- cumsum(c(0L, n[-length(n)]))
+#' xy <- do.call(rbind, rings)
+#' s0 <- unlist(lapply(seq_along(n), function(k) first[k] + 1:4))
+#' s1 <- unlist(lapply(seq_along(n), function(k) first[k] + c(2:4, 1L)))
+#' r <- cdt_triangulate(xy[, 1], xy[, 2], s0, s1, max_area = 0.5,
+#'                      edge_sources = TRUE)
+#' w <- cdt_winding(r, owner = rep(feature, n), outside = c(-0.5, -0.5))
+#' ## triangles by the features covering them
+#' table(feature_1 = w[, 1], feature_2 = w[, 2])
+cdt_winding <- function(x, owner, outside, n_features = max(owner)) {
+  if (is.null(x$edge_sources)) {
+    stop("`x` needs `edge_sources`: call cdt_triangulate(edge_sources = TRUE)", call. = FALSE)
+  }
+  es <- x$edge_sources
+  owner <- as.integer(owner)
+  if (anyNA(owner) || any(owner < 0L)) stop("`owner` must be non-negative integers", call. = FALSE)
+  if (nrow(es) > 0L && length(owner) < max(es$segment)) {
+    stop("`owner` needs one element for each input segment", call. = FALSE)
+  }
+  if (n_features < 1L) stop("`n_features` must be at least 1", call. = FALSE)
+  if (any(owner > n_features)) stop("`owner` has values above `n_features`", call. = FALSE)
+  P <- x$P; T <- x$T; S <- x$S
+  nt <- nrow(T); ns <- nrow(S); nv <- nrow(P)
+  w <- matrix(NA_integer_, nt, n_features)
+  if (nt == 0L) return(w)
+
+  ## winding change of each feature on stepping across an S row from its right
+  ## to its left; a segment running against the S row counts the other way
+  delta <- matrix(0L, ns, n_features)
+  f <- owner[es$segment]
+  keep <- f > 0L
+  if (any(keep)) {
+    cell <- (f[keep] - 1L) * ns + es$edge[keep]
+    sums <- rowsum(ifelse(es$forward[keep], 1L, -1L), cell)
+    delta[as.integer(rownames(sums))] <- as.integer(sums)
+  }
+
+  ## triangle edge k joins vertices k and k + 1 (mod 3); a counter-clockwise
+  ## triangle lies to the left of that edge as directed
+  a <- as.vector(T[, c(1L, 2L, 3L)])
+  b <- as.vector(T[, c(2L, 3L, 1L)])
+  tri <- rep(seq_len(nt), 3L)
+  k <- rep(1:3, each = nt)
+  key <- pmin(a, b) * (nv + 1) + pmax(a, b)
+  ord <- order(key)
+  nbr_tri <- nbr_edge <- matrix(NA_integer_, nt, 3L)
+  i <- which(key[ord][-length(ord)] == key[ord][-1L])
+  p <- ord[i]; q <- ord[i + 1L]
+  nbr_tri[cbind(tri[p], k[p])] <- tri[q]; nbr_edge[cbind(tri[p], k[p])] <- k[q]
+  nbr_tri[cbind(tri[q], k[q])] <- tri[p]; nbr_edge[cbind(tri[q], k[q])] <- k[p]
+
+  s_key <- pmin(S[, 1], S[, 2]) * (nv + 1) + pmax(S[, 1], S[, 2])
+  s_row <- matrix(match(key, s_key), nt, 3L)
+
+  start <- cdt_locate(P, T, outside[1L], outside[2L])
+  if (is.na(start)) stop("`outside` is not in the mesh", call. = FALSE)
+  w[start, ] <- 0L
+  queue <- integer(nt); queue[1L] <- start
+  head <- 1L; tail <- 1L
+  while (head <= tail) {
+    t <- queue[head]; head <- head + 1L
+    for (e in 1:3) {
+      u <- nbr_tri[t, e]
+      if (is.na(u) || !anyNA(w[u, ])) next
+      sr <- s_row[t, e]
+      if (is.na(sr)) {
+        w[u, ] <- w[t, ]
+      } else {
+        ## u is on the left of the S row if its own edge runs the same way
+        ue <- nbr_edge[t, e]
+        same_way <- T[u, ue] == S[sr, 1L]
+        w[u, ] <- w[t, ] + (if (same_way) 1L else -1L) * delta[sr, ]
+      }
+      tail <- tail + 1L; queue[tail] <- u
+    }
+  }
+  if (anyNA(w[, 1L])) warning("some triangles are not connected to `outside`", call. = FALSE)
+  w
+}

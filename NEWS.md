@@ -2,6 +2,11 @@
 
 This development version collects what will be released as cdtr 0.2.0.
 
+* New `cdt_winding()` finds the winding number of each input feature in every
+  triangle by walking the mesh and using `edge_sources`, with no
+  point-in-polygon step. It is the coverage of each triangle by overlapping
+  inputs, which `depth` cannot give, and is unaffected by refinement.
+
 * New `cdt_quality()` returns per-triangle area, minimum and maximum angle,
   shortest and longest edge, and radius-edge ratio, to check a mesh or that
   refinement met its targets.
