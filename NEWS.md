@@ -13,6 +13,10 @@ This development version collects what will be released as cdtr 0.2.0.
   Triangle's holes where polygons are given as rings of segments. A hole point
   in no bounded region erases nothing.
 
+* New vignette "Overlapping inputs and edge_sources": triangulate several
+  overlapping polygons at once and find which inputs cover each triangle by
+  walking the mesh with `edge_sources`, checked against point-in-polygon.
+
 * New vignette "A terrain surface from contour lines", rebuilding a surface
   around kunanyi (Mount Wellington) from contours with `cdt_triangulate_attr()`
   and checking it against the elevation model. The small data file in
