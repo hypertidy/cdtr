@@ -58,7 +58,9 @@ cdt_triangulate(
   [`default_min_edge_length()`](https://hypertidy.github.io/cdtr/reference/default_min_edge_length.md)):
   a fraction of the median constraint segment length, capped so that it
   never blocks the `max_area` target. This stops the refiner cascading
-  into sharp input corners. Use 0 to never give up.
+  into sharp input corners. Use 0 to never give up. A larger value gives
+  a coarser mesh, since it also stops the splitting of encroached
+  constraint segments (see Details).
 
 - min_edge_frac:
 
@@ -137,6 +139,25 @@ second vertex). Every input segment covering an edge has its own row,
 through crossings, splits and refinement, so an edge shared by k input
 segments (duplicates included) has k rows. Zero-length input segments
 have no rows.
+
+## Details
+
+Refinement follows Ruppert's algorithm, which protects the constraint
+segments: a segment is split whenever a vertex lies inside the circle on
+its diameter (it is "encroached"), and this applies to refinement by
+`max_area` alone as well as by `min_angle`. A mesh refined by `max_area`
+therefore has more vertices along the constraints, and better-shaped
+triangles, than one from a refiner that only splits large triangles,
+such as Triangle with `a` but no `q`. With input that has many close or
+crossing segments, such as contour lines, the difference can be a factor
+of two or more in the number of vertices.
+
+`min_edge_length` is the control for this: edges shorter than it are not
+split. Raising it gives fewer vertices. A floor of about half of
+`sqrt(max_area)` is a reasonable first try, and a floor near
+`sqrt(max_area)` may leave a few triangles over the target. The
+`unrefined` component of the result counts what was left undone, so
+check it and the largest area after raising the floor.
 
 ## Examples
 

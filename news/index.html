@@ -54,6 +54,7 @@
 <li><p>The polygon vignette shows how wkpool 0.5.0, which now uses cdtr (in Suggests) for the constrained triangulation behind <code><a href="https://hypertidy.github.io/wkpool/reference/tri_overlay.html" class="external-link">tri_overlay()</a></code> and <code><a href="https://hypertidy.github.io/wkpool/reference/tri_overlay_relate.html" class="external-link">tri_overlay_relate()</a></code>, takes the output of <code><a href="../reference/cdt_pslg.html">cdt_pslg()</a></code> through <code><a href="https://hypertidy.github.io/wkpool/reference/new_wkpool_tri.html" class="external-link">wkpool::new_wkpool_tri()</a></code>. Use <code>erase = "holes"</code> so that hole triangles are dropped. polymer builds on both packages.</p></li>
 <li><p>The terrain vignette uses a small data file in <code>inst/extdata</code> made from the Tasmania 2 m DEM, The LIST, (c) State of Tasmania, CC BY 3.0 AU (see <code>inst/COPYRIGHTS</code>). It relates the quality of the triangles to the error and appearance of the surface.</p></li>
 <li><p>The <code>erase</code> argument documents that <code>"outer"</code> keeps the triangles inside holes.</p></li>
+<li><p>The documentation and README explain that refinement, by area as well as by angle, splits encroached constraint segments (Ruppert’s rule), which gives more vertices and better-shaped triangles than area-only refinement in Triangle, and how <code>min_edge_length</code> controls it.</p></li>
 <li><p>The DESCRIPTION reference now uses the CRAN form <code>Author (year) &lt;doi:...&gt;</code>.</p></li>
 </ul></div>
 </div>

@@ -77,6 +77,11 @@ This development version collects what will be released as cdtr 0.2.0.
 - The `erase` argument documents that `"outer"` keeps the triangles
   inside holes.
 
+- The documentation and README explain that refinement, by area as well
+  as by angle, splits encroached constraint segments (Ruppert’s rule),
+  which gives more vertices and better-shaped triangles than area-only
+  refinement in Triangle, and how `min_edge_length` controls it.
+
 - The DESCRIPTION reference now uses the CRAN form
   `Author (year) <doi:...>`.
 

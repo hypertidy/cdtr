@@ -86,6 +86,31 @@ edge; by default it is derived from the input (a fraction of the median
 segment length, capped by the area target) so refinement does not
 cascade into sharp input corners. Pass `0` for never-give-up.
 
+### Refinement protects the constraints
+
+Refinement follows Ruppert’s algorithm: a constraint segment is split
+whenever a vertex lies inside the circle on its diameter, and this
+applies to `max_area` alone as well as to `min_angle`. So a mesh refined
+by area has more vertices along the constraints, and better-shaped
+triangles, than one from a refiner that only splits large triangles
+(Triangle with `a` but no `q`, for example). On simple input the two
+agree. On messy input, with many close or crossing segments, it matters.
+On anglr’s Tasmanian contours (3,766 segments, 844 crossings) with
+`max_area` set to 1/5000 of the bounding box area, cdtr adds about
+10,800 Steiner vertices, against 2,100 for Triangle with `a` alone and
+9,700 for Triangle with `a` and `q = 20`. Nearly all of cdtr’s lie on
+the original constraints. The extra vertices buy shape: 2% of cdtr’s
+triangles have a minimum angle under 5 degrees, against 9% of
+Triangle’s.
+
+`min_edge_length` is the control. Edges shorter than it are not split,
+so a larger value gives a coarser mesh. On those contours a floor of
+about half of `sqrt(max_area)` (6 where `sqrt(max_area)` is 12) cuts the
+Steiner vertices to about 7,800 and still meets the area target
+everywhere, while a floor of `sqrt(max_area)` cuts them to about 4,800
+but leaves a few triangles over the target. Raise it in steps, and check
+`unrefined` and the largest triangle area each time.
+
 ## Holes as points
 
 `erase = "holes"` drops the even depths. A hole can also be given as a
@@ -253,12 +278,13 @@ Carolina and anglr’s Tasmanian contour and cadastre data (they need
 anglr, which is no longer on CRAN). Constrained-only, the two give
 meshes of the same size, with the same largest area and smallest angle,
 on all three. With `max_area` both meet the target. cdtr adds more
-Steiner vertices (on the contours, about 14,500 against 5,800 vertices)
-and reports in `unrefined` where it declined to refine, and its smallest
-angles are better on the counties but equally poor on the contours.
-Triangle is faster, by a factor of about three to four in these runs, so
-it is the better choice if speed on a large problem matters more than
-the extra features.
+Steiner vertices (on the contours, about 14,500 against 5,800 vertices
+in total), because it protects the constraints (see above), and reports
+in `unrefined` where it declined to refine. Its smallest angles are
+better on the counties but equally poor on the contours. Triangle is
+faster, by a factor of about three to four in these runs, so it is the
+better choice if speed on a large problem matters more than the extra
+features.
 
 # Package index
 
