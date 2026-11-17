@@ -15,3 +15,4 @@
 ^\.posit$
 ^\.posit/assistant$
 ^data-raw$
+^CODE_OF_CONDUCT\.md$
