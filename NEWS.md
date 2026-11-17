@@ -59,8 +59,14 @@ This development version collects what will be released as cdtr 0.2.0.
 
 * The documentation and README explain that refinement, by area as well as by
   angle, splits encroached constraint segments (Ruppert's rule), which gives
-  more vertices and better-shaped triangles than area-only refinement in
-  Triangle, and how `min_edge_length` controls it.
+  more vertices along the constraints than area-only refinement in Triangle,
+  and how `min_edge_length` controls it.
+
+* The benchmark scripts in `inst/benchmarks/` read line layers (anglr's
+  Tasmanian contours) as open lines meshed over their convex hull. They had
+  closed each line into a ring, which dropped its last vertex and added 844
+  crossings, so the README's contour figures came from the wrong input (#10).
+  The new `bench5.R` gives the README's refinement figures.
 
 * The DESCRIPTION reference now uses the CRAN form `Author (year) <doi:...>`.
 

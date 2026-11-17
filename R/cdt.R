@@ -8,18 +8,19 @@
 #' segments: a segment is split whenever a vertex lies inside the circle on its
 #' diameter (it is "encroached"), and this applies to refinement by `max_area`
 #' alone as well as by `min_angle`. A mesh refined by `max_area` therefore has
-#' more vertices along the constraints, and better-shaped triangles, than one
-#' from a refiner that only splits large triangles, such as Triangle with `a`
-#' but no `q`. With input that has many close or crossing segments, such as
-#' contour lines, the difference can be a factor of two or more in the number of
-#' vertices.
+#' more vertices along the constraints than one from a refiner that only splits
+#' large triangles, such as Triangle with `a` but no `q`. On North Carolina's
+#' counties and anglr's Tasmanian cadastre and contours, cdtr adds 1.2 to 1.3
+#' times as many vertices as Triangle with an area bound alone, with 40 to 62%
+#' of them on the constraints against 11 to 14%, and on the two polygon layers
+#' fewer triangles with a minimum angle under 5 degrees (see
+#' `inst/benchmarks/bench5.R`).
 #'
 #' `min_edge_length` is the control for this: edges shorter than it are not
-#' split. Raising it gives fewer vertices. A floor of about half of
-#' `sqrt(max_area)` is a reasonable first try, and a floor near `sqrt(max_area)`
-#' may leave a few triangles over the target. The `unrefined` component of the
-#' result counts what was left undone, so check it and the largest area after
-#' raising the floor.
+#' split. Raising it gives fewer vertices: on those inputs a floor of
+#' `sqrt(max_area)` gives 10 to 12% fewer than the default. The `unrefined`
+#' component of the result counts what was left undone, so check it and the
+#' largest area after raising the floor.
 #'
 #' @param x,y vertex coordinates
 #' @param s0,s1 1-based vertex indices of constraint segment start/end (may be NULL)
