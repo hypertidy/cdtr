@@ -19,13 +19,13 @@ Source:
 [`DESCRIPTION`](https://github.com/hypertidy/cdtr/blob/main/DESCRIPTION)
 
 Sumner M (2026). *cdtr: Constrained Delaunay Triangulation with
-Refinement*. R package version 0.1.0.9002,
+Refinement*. R package version 0.2.0,
 <https://github.com/hypertidy/cdtr>.
 
     @Manual{,
       title = {cdtr: Constrained Delaunay Triangulation with Refinement},
       author = {Michael Sumner},
       year = {2026},
-      note = {R package version 0.1.0.9002},
+      note = {R package version 0.2.0},
       url = {https://github.com/hypertidy/cdtr},
     }

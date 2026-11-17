@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">cdtr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9002</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -35,21 +35,20 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="cdtr-development-version">cdtr (development version)<a class="anchor" aria-label="anchor" href="#cdtr-development-version"></a></h2>
-<p>This development version collects what will be released as cdtr 0.2.0.</p>
+<h2 class="pkg-version" data-toc-text="0.2.0" id="cdtr-020">cdtr 0.2.0<a class="anchor" aria-label="anchor" href="#cdtr-020"></a></h2>
 <div class="section level3">
-<h3 id="new-functions-development-version">New functions<a class="anchor" aria-label="anchor" href="#new-functions-development-version"></a></h3>
+<h3 id="new-functions-0-2-0">New functions<a class="anchor" aria-label="anchor" href="#new-functions-0-2-0"></a></h3>
 <ul><li><p><code><a href="../reference/cdt_locate.html">cdt_locate()</a></code> returns the triangle containing each query point (<code>NA</code> outside), using the grid of triangle buckets from <code><a href="../reference/cdt_interpolate.html">cdt_interpolate()</a></code> and exact orientation tests; ties on shared edges go to the lowest triangle. With a triangle-to-feature table this is point-in-polygon for many points. With <code>barycentric = TRUE</code> it also returns the barycentric coordinates of each point in its triangle (<code>b1</code>, <code>b2</code>, <code>b3</code>, in the order of <code>T</code>), the weights that interpolate any per-vertex value. The grid is one shared, flat structure (<code>src/grid.h</code>) used by <code><a href="../reference/cdt_locate.html">cdt_locate()</a></code> and <code><a href="../reference/cdt_interpolate.html">cdt_interpolate()</a></code>.</p></li>
 <li><p><code><a href="../reference/cdt_winding.html">cdt_winding()</a></code> finds the winding number of each input feature in every triangle by walking the mesh with <code>edge_sources</code>, with no point-in-polygon step. It gives the coverage of each triangle by overlapping inputs, which <code>depth</code> cannot, and is unaffected by refinement.</p></li>
 <li><p><code><a href="../reference/cdt_quality.html">cdt_quality()</a></code> returns per-triangle area, minimum and maximum angle, shortest and longest edge, and radius-edge ratio, to check a mesh or that refinement met its targets.</p></li>
 </ul></div>
 <div class="section level3">
-<h3 id="new-arguments-and-results-development-version">New arguments and results<a class="anchor" aria-label="anchor" href="#new-arguments-and-results-development-version"></a></h3>
+<h3 id="new-arguments-and-results-0-2-0">New arguments and results<a class="anchor" aria-label="anchor" href="#new-arguments-and-results-0-2-0"></a></h3>
 <ul><li><p><code>cdt_triangulate(edge_sources = TRUE)</code> returns <code>edge_sources</code>, one row per fixed edge and covering input segment (<code>edge</code>, <code>segment</code>, <code>forward</code>), tracked through crossings, splits and refinement. This is the constraint-to-input map of the mesh spec, and lets callers label regions by which inputs cover them, which <code>depth</code> cannot do. An input segment lying on a longer collinear input is no longer lost from CDT’s provenance when refinement splits the shared edge.</p></li>
 <li><p><code>cdt_triangulate(holes = )</code> takes hole points (a two-column matrix, or a list or data frame with <code>x</code> and <code>y</code>) and erases the region around each that is bounded by constraint segments, as the <code>H</code> of an <code><a href="https://rdrr.io/pkg/RTriangle/man/pslg.html" class="external-link">RTriangle::pslg()</a></code> does. <code><a href="../reference/cdt_pslg.html">cdt_pslg()</a></code> uses <code>p$H</code> when present. A hole point in no bounded region erases nothing.</p></li>
 </ul></div>
 <div class="section level3">
-<h3 id="documentation-development-version">Documentation<a class="anchor" aria-label="anchor" href="#documentation-development-version"></a></h3>
+<h3 id="documentation-0-2-0">Documentation<a class="anchor" aria-label="anchor" href="#documentation-0-2-0"></a></h3>
 <ul><li><p>Four vignettes: “Getting started with cdtr”, “Polygons, triangle pools and wkpool”, “A terrain surface from contour lines” and “Overlapping inputs and edge_sources”.</p></li>
 <li><p>The polygon vignette shows how wkpool 0.5.0, which now uses cdtr (in Suggests) for the constrained triangulation behind <code><a href="https://hypertidy.github.io/wkpool/reference/tri_overlay.html" class="external-link">tri_overlay()</a></code> and <code><a href="https://hypertidy.github.io/wkpool/reference/tri_overlay_relate.html" class="external-link">tri_overlay_relate()</a></code>, takes the output of <code><a href="../reference/cdt_pslg.html">cdt_pslg()</a></code> through <code><a href="https://hypertidy.github.io/wkpool/reference/new_wkpool_tri.html" class="external-link">wkpool::new_wkpool_tri()</a></code>. Use <code>erase = "holes"</code> so that hole triangles are dropped. polymer builds on both packages.</p></li>
 <li><p>The terrain vignette uses a small data file in <code>inst/extdata</code> made from the Tasmania 2 m DEM, The LIST, (c) State of Tasmania, CC BY 3.0 AU (see <code>inst/COPYRIGHTS</code>). It relates the quality of the triangles to the error and appearance of the surface.</p></li>
