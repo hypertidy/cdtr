@@ -1,6 +1,4 @@
-# cdtr (development version)
-
-This development version collects what will be released as cdtr 0.2.0.
+# cdtr 0.2.0
 
 ## New functions
 
