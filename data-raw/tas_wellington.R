@@ -20,5 +20,7 @@ contours <- data.frame(line = as.integer(factor(paste(g$geom, g$part, sep = ".")
 grid <- list(z = round(matrix(values(dem)[, 1], nrow(dem), ncol(dem), byrow = TRUE), 1),
              xmin = xmin(dem), xmax = xmax(dem), ymin = ymin(dem), ymax = ymax(dem),
              crs = "EPSG:28355")
+## serialization version 2 so that the file reads on any R, and the package
+## does not depend on R >= 3.5.0
 saveRDS(list(contours = contours, grid = grid), "inst/extdata/tas_wellington.rds",
-        compress = "xz")
+        version = 2, compress = "xz")
