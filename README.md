@@ -268,6 +268,7 @@ the target on the polygons. Over the hull of the contours cdtr leaves
 5,835 against 5,343 vertices in total), because it protects the
 constraints (see above), and reports in `unrefined` where it declined to
 refine. Its smallest angles are better on the counties but equally poor
-on the contours. Triangle is faster, by a factor of about two and a half
-to four in these runs, so it is the better choice if speed on a large
-problem matters more than the extra features.
+on the contours. Triangle is faster: about three times on the counties
+with refinement, and about one and a half times on the cadastre without
+(the timings in `bench.R`, on one machine), so it is the better choice
+if speed on a large problem matters more than the extra features.
