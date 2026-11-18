@@ -211,6 +211,11 @@
 <p>It shares a vertices, segments and triangles contract with other backends, so which one to use is a choice and not a rewrite. RTriangle (Shewchuk’s Triangle) is the established one in R, and <code><a href="reference/cdt_pslg.html">cdt_pslg()</a></code> accepts its <code>pslg</code> input as it is. <a href="https://github.com/hypertidy/laridae" class="external-link">laridae</a> provides CGAL’s constrained triangulations and meshing, as a persistent mesh that can be edited and refined. Having more than one option opens up more of what can be done with triangulation in R.</p>
 <p>The <code>inst/benchmarks/</code> scripts compare cdtr and RTriangle on North Carolina’s counties and anglr’s Tasmanian cadastre, which are polygons, and its Tasmanian contours, which are open lines and are meshed over their convex hull (the scripts need anglr, which is no longer on CRAN). Constrained-only, the two give meshes of the same size, with the same largest area and smallest angle, on all three. With <code>max_area</code> both meet the target on the polygons. Over the hull of the contours cdtr leaves 0.3% of triangles above it, and reports them in <code>unrefined</code> as <code>circumcenterOutside</code>. cdtr adds more Steiner vertices (on the contours, 5,835 against 5,343 vertices in total), because it protects the constraints (see above), and reports in <code>unrefined</code> where it declined to refine. Its smallest angles are better on the counties but equally poor on the contours. Triangle is faster: about three times on the counties with refinement, and about one and a half times on the cadastre without (the timings in <code>bench.R</code>, on one machine), so it is the better choice if speed on a large problem matters more than the extra features.</p>
 </div>
+<div class="section level2">
+<h2 id="code-of-conduct">Code of Conduct<a class="anchor" aria-label="anchor" href="#code-of-conduct"></a>
+</h2>
+<p>Please note that the cdtr project is released with a <a href="https://hypertidy.github.io/cdtr/CODE_OF_CONDUCT.html">Contributor Code of Conduct</a>. By contributing to this project, you agree to abide by its terms.</p>
+</div>
 </div>
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
@@ -230,6 +235,12 @@
 </ul>
 </div>
 
+<div class="community">
+<h2 data-toc-skip>Community</h2>
+<ul class="list-unstyled">
+<li><a href="CODE_OF_CONDUCT.html">Code of conduct</a></li>
+</ul>
+</div>
 
 <div class="citation">
 <h2 data-toc-skip>Citation</h2>

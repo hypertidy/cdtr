@@ -290,6 +290,12 @@ with refinement, and about one and a half times on the cadastre without
 (the timings in `bench.R`, on one machine), so it is the better choice
 if speed on a large problem matters more than the extra features.
 
+## Code of Conduct
+
+Please note that the cdtr project is released with a [Contributor Code
+of Conduct](https://hypertidy.github.io/cdtr/CODE_OF_CONDUCT.html). By
+contributing to this project, you agree to abide by its terms.
+
 # Package index
 
 ## Triangulation
